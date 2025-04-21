@@ -1,0 +1,13 @@
+[project]
+name = "asitetoqrcod"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cairosvg>=2.7.1",
+    "django>=5.2",
+    "pillow>=11.2.1",
+    "pyzbar>=0.1.9",
+    "qrcode>=8.1",
+]
