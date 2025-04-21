@@ -57,7 +57,7 @@ TEMPLATES = [
         },
     },
 ]
-WSGI_APPLICATION = 'wsgi.application'
+WSGI_APPLICATION = 'qrcodesatsite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 DATABASES = {
