@@ -1,9 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
 
 #dbases
 .sqlite3
 
 # Pycache
 __pycache__/
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
 
 # Celery stuff
 celerybeat-schedule
