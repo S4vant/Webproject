@@ -6,9 +6,8 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
-.venv
-
+#dbases
+.sqlite3
 # uv.lock
 uv.lock
 
