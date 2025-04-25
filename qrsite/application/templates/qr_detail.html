@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ qr.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">{{ qr.title }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <img src="{{ qr.qr_code.url }}" alt="{{ qr.title }}" class="img-fluid" style="max-width: 300px;">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Информация:</h5>
+                        <p><strong>Тип:</strong> {{ qr.get_qr_type_display }}</p>
+                        <p><strong>Создан:</strong> {{ qr.created_at|date:"d.m.Y H:i" }}</p>
+                        <p><strong>Просмотров:</strong> {{ qr.views }}</p>
+                        {% if qr.is_public %}
+                            <p><strong>Статус:</strong> Публичный</p>
+                        {% else %}
+                            <p><strong>Статус:</strong> Приватный</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Содержимое:</h5>
+                        <div class="p-3 bg-light rounded">
+                            {% if qr.qr_type == 'static' %}
+                                <p class="mb-0">{{ qr.content }}</p>
+                            {% else %}
+                                <p class="mb-0"><a href="{{ qr.content }}" target="_blank">{{ qr.content }}</a></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'download_qr' qr.id %}" class="btn btn-primary">
+                            <i class="fas fa-download"></i> Скачать
+                        </a>
+                        {% if request.user == qr.user %}
+                            <div>
+                                <a href="{% url 'qr_edit' qr.id %}" class="btn btn-warning">
+                                    <i class="fas fa-edit"></i> Редактировать
+                                </a>
+                                <a href="{% url 'qr_delete' qr.id %}" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Удалить
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

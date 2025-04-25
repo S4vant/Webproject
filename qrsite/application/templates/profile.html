@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Профиль пользователя{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="profile-header text-center">
+                <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=0D6EFD&color=fff" 
+                     alt="Аватар" class="profile-avatar">
+                <h3>{{ user.username }}</h3>
+                <p class="mb-0">{{ user.email }}</p>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Редактировать профиль
+                    </a>
+                    <a href="{% url 'password_change' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-key"></i> Изменить пароль
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Мои QR-коды</h3>
+            </div>
+            <div class="card-body">
+                {% if qr_codes %}
+                    <div class="row">
+                        {% for qr in qr_codes %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ qr.title }}</h5>
+                                        <img src="{{ qr.qr_code.url }}" alt="QR Code" class="img-fluid mb-2">
+                                        <p class="card-text">
+                                            <small class="text-muted">
+                                                Создан: {{ qr.created_at|date:"d.m.Y H:i" }}<br>
+                                                Просмотров: {{ qr.views }}
+                                            </small>
+                                        </p>
+                                        <div class="btn-group w-100">
+                                            <a href="{% url 'qr_detail' qr.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i> Просмотр
+                                            </a>
+                                            <a href="{% url 'download_qr' qr.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-download"></i> Скачать
+                                            </a>
+                                            {% if qr.is_dynamic %}
+                                                <a href="{% url 'edit_dynamic_qr' qr.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-gear"></i> Настройки
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-qr-code-scan" style="font-size: 3rem; color: #0d6efd;"></i>
+                        <h4 class="mt-3">У вас пока нет QR-кодов</h4>
+                        <p class="text-muted">Создайте свой первый QR-код прямо сейчас!</p>
+                        <div class="d-grid gap-2 col-md-6 mx-auto">
+                            <a href="{% url 'create_static_qr' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Создать QR-код
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

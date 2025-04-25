@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Примеры QR-кодов{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center">
+    <h1 class="display-4 mb-4">Примеры QR-кодов</h1>
+    <p class="lead">Ознакомьтесь с различными типами QR-кодов, которые вы можете создать</p>
+</div>
+
+<div class="row">
+    <!-- Статические QR-коды -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Статические QR-коды</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h5>Стандартный QR</h5>
+                                <img src="{% static 'images/standard_qr.png' %}" alt="Стандартный QR" class="img-fluid showcase-qr">
+                                <p class="mt-2">Простой черно-белый QR-код</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h5>Цветной QR</h5>
+                                <img src="{% static 'images/colored_qr.png' %}" alt="Цветной QR" class="img-fluid showcase-qr">
+                                <p class="mt-2">QR-код с цветным фоном</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h5>QR с логотипом</h5>
+                                <img src="{% static 'images/logo_qr.png' %}" alt="QR с логотипом" class="img-fluid showcase-qr">
+                                <p class="mt-2">QR-код с встроенным логотипом</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h5>Стилизованный QR</h5>
+                                <img src="{% static 'images/styled_qr.png' %}" alt="Стилизованный QR" class="img-fluid showcase-qr">
+                                <p class="mt-2">QR-код с нестандартной формой</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'create_static_qr' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Создать статический QR
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Динамические QR-коды -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Динамические QR-коды</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h5>URL QR</h5>
+                                <img src="{% static 'images/url_qr.png' %}" alt="URL QR" class="img-fluid showcase-qr">
+                                <p class="mt-2">QR-код для веб-сайтов</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h5>Wi-Fi QR</h5>
+                                <img src="{% static 'images/wifi_qr.png' %}" alt="Wi-Fi QR" class="img-fluid showcase-qr">
+                                <p class="mt-2">QR-код для подключения к Wi-Fi</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h5>Контакты QR</h5>
+                                <img src="{% static 'images/contact_qr.png' %}" alt="Контакты QR" class="img-fluid showcase-qr">
+                                <p class="mt-2">QR-код с контактной информацией</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h5>События QR</h5>
+                                <img src="{% static 'images/event_qr.png' %}" alt="События QR" class="img-fluid showcase-qr">
+                                <p class="mt-2">QR-код для календарных событий</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'create_dynamic_qr' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Создать динамический QR
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Преимущества наших QR-кодов</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="feature-card">
+                            <i class="bi bi-shield-check feature-icon"></i>
+                            <h4>Безопасность</h4>
+                            <p>Защищенные QR-коды с возможностью отслеживания</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="feature-card">
+                            <i class="bi bi-palette feature-icon"></i>
+                            <h4>Кастомизация</h4>
+                            <p>Широкие возможности настройки внешнего вида</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="feature-card">
+                            <i class="bi bi-graph-up feature-icon"></i>
+                            <h4>Аналитика</h4>
+                            <p>Подробная статистика использования QR-кодов</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

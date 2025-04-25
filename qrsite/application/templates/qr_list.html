@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Мои QR-коды{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Мои QR-коды</h2>
+        </div>
+        <div class="col text-end">
+            <div class="btn-group">
+                <a href="{% url 'create_static_qr' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Создать статический QR-код
+                </a>
+                <a href="{% url 'create_dynamic_qr' %}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Создать динамический QR-код
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        {% for qr in qr_codes %}
+            <div class="col-md-4 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">{{ qr.title }}</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{{ qr.qr_code.url }}" alt="{{ qr.title }}" class="img-fluid mb-3" style="max-width: 200px;">
+                        <p class="card-text">
+                            <small class="text-muted">
+                                Создан: {{ qr.created_at|date:"d.m.Y H:i" }}<br>
+                                Тип: {% if qr.is_dynamic %}Динамический{% else %}Статический{% endif %}<br>
+                                Формат: {{ qr.format|upper }}<br>
+                                Просмотров: {{ qr.views }}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100">
+                            <a href="{% url 'qr_detail' qr.id %}" class="btn btn-outline-primary">
+                                <i class="bi bi-eye"></i> Просмотр
+                            </a>
+                            <a href="{% url 'qr_edit' qr.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-pencil"></i> Редактировать
+                            </a>
+                            <a href="{% url 'download_qr' qr.id %}" class="btn btn-outline-success">
+                                <i class="bi bi-download"></i> Скачать
+                            </a>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ qr.id }}">
+                                <i class="bi bi-trash"></i> Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модальное окно подтверждения удаления -->
+            <div class="modal fade" id="deleteModal{{ qr.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ qr.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteModalLabel{{ qr.id }}">Подтверждение удаления</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Вы уверены, что хотите удалить QR-код "{{ qr.title }}"?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <form action="{% url 'qr_delete' qr.id %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">Удалить</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    У вас пока нет созданных QR-кодов. Создайте свой первый QR-код!
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 
