@@ -60,12 +60,16 @@ def create_qr_code(data, size=10, format='png', background_image=None, fill_colo
         except Exception as e:
             print(f"Ошибка при добавлении фонового изображения: {e}")
     
+    # Преобразуем формат 'JPG' в 'JPEG'
+    if format.lower() == 'jpg':
+        format = 'JPEG'
+    
     # Сохраняем результат в BytesIO
     output = BytesIO()
     if format == 'svg':
         img.save(output)
     else:
-        img.save(output, format=format.upper())
+        img.save(output, format=format.upper())  # Убедитесь, что формат передается в верхнем регистре
     output.seek(0)
     
     return output
@@ -153,4 +157,4 @@ def download_qr_code(qr_code, filename):
     """
     response = HttpResponse(qr_code.getvalue(), content_type=f'image/{qr_code.format}')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response 
+    return response

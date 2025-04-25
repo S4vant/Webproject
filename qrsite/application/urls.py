@@ -41,4 +41,5 @@ urlpatterns = [
     path('qr/<int:qr_id>/redirect/', views.qr_redirect, name='qr_redirect'),
     path('examples/', views.examples_list, name='examples_list'),
     path('examples/<int:example_id>/', views.example_detail, name='example_detail'),
+
 ]

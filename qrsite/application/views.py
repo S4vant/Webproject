@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.utils import timezone
 from django.conf import settings
-from .forms import CustomUserCreationForm, StaticQRCodeForm, DynamicQRCodeForm, StaticQRForm, DynamicQRForm, ProfileForm
+from .forms import CustomUserCreationForm, StaticQRForm, DynamicQRForm, ProfileForm
 from .models import QRCode, StaticQRCode, DynamicQRCode
 from .utils import save_qr_code, create_qr_code
 import os
@@ -31,6 +31,25 @@ def register(request):
 def logout_view(request):
     logout(request)
     return redirect('home')
+
+def login_view(request):
+    """
+    Вход пользователя в систему
+    """
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            messages.success(request, 'Вы успешно вошли в систему!')
+            return redirect('home')
+        else:
+            messages.error(request, 'Неверное имя пользователя или пароль')
+    
+    return render(request, 'registration/login.html')
+
 
 def index(request):
     return render(request, 'home.html')
@@ -65,7 +84,6 @@ def create_static_qr(request):
         if form.is_valid():
             qr = form.save(commit=False)
             qr.user = request.user
-            qr.qr_type = 'static'
             
             # Получаем размер и формат из формы
             size = form.cleaned_data['size']
@@ -101,15 +119,14 @@ def create_dynamic_qr(request):
         if form.is_valid():
             qr = form.save(commit=False)
             qr.user = request.user
-            qr.qr_type = 'dynamic'
-            
+   
             # Получаем размер и формат из формы
             size = form.cleaned_data['size']
             format = form.cleaned_data['format']
             
             # Генерация QR-кода
             qr_code = create_qr_code(
-                data=qr.content,
+                data=qr.target_url,  # Убедитесь, что используется правильное поле
                 size=size,
                 format=format,
                 background_image=request.FILES.get('background_image')
@@ -121,7 +138,7 @@ def create_dynamic_qr(request):
             qr.save()
             
             messages.success(request, 'QR-код успешно создан!')
-            return redirect('qr_detail', qr_id=qr.id)
+            return redirect('qr_detail', qr_id=qr.id)  # Перенаправление на страницу деталей QR-кода
     else:
         form = DynamicQRForm()
     
@@ -181,7 +198,7 @@ def qr_delete(request, qr_id):
         qr.delete()
         messages.success(request, 'QR-код успешно удален')
         return redirect('profile')
-    return render(request, 'application/qr_confirm_delete.html', {'qr': qr})
+    return render(request, 'qr_confirm_delete.html', {'qr': qr})
 
 @login_required
 def qr_edit(request, qr_id):
@@ -195,25 +212,28 @@ def qr_edit(request, qr_id):
     if request.method == 'POST':
         if isinstance(qr, DynamicQRCode):
             form = DynamicQRForm(request.POST, request.FILES, instance=qr)
+            qr_type = 'dynamic'
         else:
             form = StaticQRForm(request.POST, request.FILES, instance=qr)
+            qr_type = 'static'
             
         if form.is_valid():
             qr = form.save(commit=False)
             qr.updated_at = timezone.now()
-            
+            format = form.cleaned_data['format']
             # Генерируем новый QR-код с обновленными параметрами
             qr_data = qr.target_url if isinstance(qr, DynamicQRCode) else qr.content
-            qr_code = generate_qr_code(
+            qr_code = create_qr_code(
                 qr_data,
                 size=form.cleaned_data['size'],
                 format=form.cleaned_data['format'],
                 background_image=form.cleaned_data.get('background_image'),
-                logo=form.cleaned_data.get('logo')
+
+                # logo=form.cleaned_data.get('logo')
             )
             
             # Сохраняем QR-код
-            qr.image = save_qr_code(qr_code, qr.format)
+            qr.image = save_qr_code(qr_code, request.user, qr.title,qr_type,  qr.format)
             qr.save()
             
             messages.success(request, 'QR-код успешно обновлен')
@@ -227,9 +247,10 @@ def qr_edit(request, qr_id):
     context = {
         'form': form,
         'qr': qr,
-        'is_dynamic': isinstance(qr, DynamicQRCode)
+        'is_dynamic': isinstance(qr, DynamicQRCode),
+        'image': qr.qr_code.url if qr.qr_code else None,
     }
-    return render(request, 'application/qr_edit.html', context)
+    return render(request, 'qr_edit.html', context)
 
 def qr_redirect(request, qr_id):
     return handle_qr_redirect(qr_id)
@@ -242,60 +263,6 @@ def example_detail(request, example_id):
     example = get_object_or_404(QRCode, id=example_id, is_public=True)
     return render(request, 'application/example_detail.html', {'example': example})
 
-@login_required
-def edit_dynamic_qr(request, qr_id):
-    """
-    Редактирование существующего динамического QR-кода
-    """
-    qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
-    
-    if request.method == 'POST':
-        form = DynamicQRForm(request.POST, request.FILES, instance=qr)
-        if form.is_valid():
-            qr = form.save(commit=False)
-            qr.user = request.user
-            qr.qr_type = 'dynamic'
-            
-            # Генерация QR-кода
-            qr_code = create_qr_code(
-                data=qr.target_url,
-                size=qr.size,
-                format=qr.format,
-                background_image=request.FILES.get('background_image')
-            )
-            
-            # Сохранение QR-кода
-            filepath = save_qr_code(qr_code, request.user, qr.title, 'dynamic', qr.format)
-            qr.qr_code = filepath
-            qr.save()
-            
-            messages.success(request, 'QR-код успешно обновлен!')
-            return redirect('qr_detail', qr_id=qr.id)
-    else:
-        form = DynamicQRForm(instance=qr)
-    
-    return render(request, 'edit_dynamic_qr.html', {
-        'form': form,
-        'qr': qr
-    })
-
-def login_view(request):
-    """
-    Вход пользователя в систему
-    """
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            login(request, user)
-            messages.success(request, 'Вы успешно вошли в систему!')
-            return redirect('home')
-        else:
-            messages.error(request, 'Неверное имя пользователя или пароль')
-    
-    return render(request, 'registration/login.html')
 
 @login_required
 def qr_list(request):

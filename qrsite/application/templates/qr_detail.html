@@ -18,7 +18,7 @@
                     
                     <div class="mb-3">
                         <h5>Информация:</h5>
-                        <p><strong>Тип:</strong> {{ qr.get_qr_type_display }}</p>
+                        <p><strong>Тип:</strong> {{ qr.format }}</p>
                         <p><strong>Создан:</strong> {{ qr.created_at|date:"d.m.Y H:i" }}</p>
                         <p><strong>Просмотров:</strong> {{ qr.views }}</p>
                         {% if qr.is_public %}
