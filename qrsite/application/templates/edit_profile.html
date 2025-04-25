@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Редактирование профиля{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Редактирование профиля</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Имя пользователя</label>
+                        <input type="text" name="username" id="id_username" 
+                               class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
+                               value="{{ form.username.value|default:user.username }}" required>
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.username.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label">Email</label>
+                        <input type="email" name="email" id="id_email" 
+                               class="form-control {% if form.email.errors %}is-invalid{% endif %}" 
+                               value="{{ form.email.value|default:user.email }}" required>
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.email.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_first_name" class="form-label">Имя</label>
+                        <input type="text" name="first_name" id="id_first_name" 
+                               class="form-control {% if form.first_name.errors %}is-invalid{% endif %}" 
+                               value="{{ form.first_name.value|default:user.first_name }}">
+                        {% if form.first_name.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.first_name.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_last_name" class="form-label">Фамилия</label>
+                        <input type="text" name="last_name" id="id_last_name" 
+                               class="form-control {% if form.last_name.errors %}is-invalid{% endif %}" 
+                               value="{{ form.last_name.value|default:user.last_name }}">
+                        {% if form.last_name.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.last_name.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_avatar" class="form-label">Аватар</label>
+                        <input type="file" name="avatar" id="id_avatar" 
+                               class="form-control {% if form.avatar.errors %}is-invalid{% endif %}">
+                        {% if form.avatar.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.avatar.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Сохранить изменения
+                        </button>
+                        <a href="{% url 'profile' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Назад
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

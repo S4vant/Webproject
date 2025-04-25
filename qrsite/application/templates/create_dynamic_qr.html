@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Создание динамического QR-кода{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Создание динамического QR-кода</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">Название</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.title.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.target_url.id_for_label }}" class="form-label">Целевой URL</label>
+                            {{ form.target_url }}
+                            {% if form.target_url.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.target_url.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.size.id_for_label }}" class="form-label">Размер QR-кода</label>
+                            {{ form.size }}
+                            <div class="form-text">{{ form.size.help_text }}</div>
+                            {% if form.size.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.size.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.format.id_for_label }}" class="form-label">Формат</label>
+                            {{ form.format }}
+                            {% if form.format.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.format.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.background_image.id_for_label }}" class="form-label">Фоновое изображение</label>
+                            {{ form.background_image }}
+                            <div class="form-text">Не поддерживается для SVG формата</div>
+                            {% if form.background_image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.background_image.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.is_public }}
+                            <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+                                Сделать QR-код публичным
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Создать QR-код</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Предпросмотр</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div id="qr-preview" class="mb-3">
+                        <img src="{% static 'images/qr_placeholder.png' %}" alt="Предпросмотр QR-кода" 
+                             class="img-fluid" style="max-width: 300px;">
+                    </div>
+                    <p class="text-muted">Предпросмотр будет обновлен после создания QR-кода</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

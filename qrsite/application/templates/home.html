@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center">
+    <h1 class="display-4 mb-4">Создавайте красивые QR-коды</h1>
+    <p class="lead mb-4">Простой и удобный генератор QR-кодов с широкими возможностями настройки</p>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <a href="{% url 'create_static_qr' %}" class="btn btn-primary btn-lg px-4 gap-3">
+            <i class="bi bi-qr-code-scan"></i> Создать QR-код
+        </a>
+        <a href="{% url 'showcase' %}" class="btn btn-outline-light btn-lg px-4">
+            <i class="bi bi-collection"></i> Примеры
+        </a>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-lightning-charge feature-icon"></i>
+                <h3>Быстро и просто</h3>
+                <p>Создавайте QR-коды за считанные секунды с помощью нашего интуитивно понятного интерфейса</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-palette feature-icon"></i>
+                <h3>Кастомизация</h3>
+                <p>Настраивайте цвета, размеры и добавляйте логотипы для создания уникальных QR-кодов</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-shield-check feature-icon"></i>
+                <h3>Безопасность</h3>
+                <p>Защищенные QR-коды с возможностью отслеживания и управления доступом</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Популярные типы QR-кодов</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-link-45deg feature-icon"></i>
+                                <h5>URL</h5>
+                                <p>Ссылки на веб-сайты</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-wifi feature-icon"></i>
+                                <h5>Wi-Fi</h5>
+                                <p>Подключение к сетям</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-person-vcard feature-icon"></i>
+                                <h5>Контакты</h5>
+                                <p>Контактная информация</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-calendar-event feature-icon"></i>
+                                <h5>События</h5>
+                                <p>Календарные события</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Как это работает</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center">
+                            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px; font-size: 24px;">1</div>
+                            <h4 class="mt-3">Выберите тип</h4>
+                            <p>Выберите тип QR-кода и введите необходимую информацию</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center">
+                            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px; font-size: 24px;">2</div>
+                            <h4 class="mt-3">Настройте внешний вид</h4>
+                            <p>Выберите цвета, размер и добавьте логотип</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center">
+                            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px; font-size: 24px;">3</div>
+                            <h4 class="mt-3">Скачайте и используйте</h4>
+                            <p>Скачайте QR-код и разместите его где угодно</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

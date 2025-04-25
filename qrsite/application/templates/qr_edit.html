@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Редактирование QR-кода{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Редактирование QR-кода</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">Название</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.title.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if is_dynamic %}
+                            <div class="mb-3">
+                                <label for="{{ form.target_url.id_for_label }}" class="form-label">Целевой URL</label>
+                                {{ form.target_url }}
+                                {% if form.target_url.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ form.target_url.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="mb-3">
+                                <label for="{{ form.content.id_for_label }}" class="form-label">Содержимое</label>
+                                {{ form.content }}
+                                {% if form.content.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ form.content.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.size.id_for_label }}" class="form-label">Размер QR-кода</label>
+                            {{ form.size }}
+                            <div class="form-text">{{ form.size.help_text }}</div>
+                            {% if form.size.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.size.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.format.id_for_label }}" class="form-label">Формат</label>
+                            {{ form.format }}
+                            {% if form.format.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.format.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.background_image.id_for_label }}" class="form-label">Фоновое изображение</label>
+                            {{ form.background_image }}
+                            <div class="form-text">Не поддерживается для SVG формата</div>
+                            {% if form.background_image.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.background_image.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.logo.id_for_label }}" class="form-label">Логотип</label>
+                            {{ form.logo }}
+                            {% if form.logo.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.logo.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.is_public }}
+                            <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+                                Сделать QR-код публичным
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                            <a href="{% url 'qr_detail' qr.id %}" class="btn btn-secondary">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Текущий QR-код</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <img src="{{ qr.image.url }}" alt="Текущий QR-код" class="img-fluid" style="max-width: 300px;">
+                    </div>
+                    <p class="text-muted">Предпросмотр будет обновлен после сохранения изменений</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

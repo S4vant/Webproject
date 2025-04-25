@@ -1,0 +1,61 @@
+{% extends 'make_qr/base.html' %}
+
+{% block title %}{{ qr.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">{{ qr.title }}</h3>
+                {% if user == qr.user %}
+                    <div>
+                        <a href="{% url 'qr_edit' qr.id %}" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                        <a href="{% url 'qr_delete' qr.id %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <h5>Описание:</h5>
+                            <p>{{ qr.description|default:"Нет описания" }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h5>Тип:</h5>
+                            <p>{{ qr.get_qr_type_display }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h5>Дата создания:</h5>
+                            <p>{{ qr.created_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        {% if qr.qr_type == 'dynamic' %}
+                            <div class="mb-3">
+                                <h5>Количество переходов:</h5>
+                                <p>{{ qr.dynamicqrcode.redirect_count }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <div class="mb-3">
+                            <h5>QR-код:</h5>
+                            <!-- Здесь будет отображаться QR-код -->
+                            <div class="qr-code-placeholder" style="width: 200px; height: 200px; margin: 0 auto; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                <span class="text-muted">QR-код будет здесь</span>
+                            </div>
+                        </div>
+                        {% if qr.qr_type == 'dynamic' %}
+                            <div class="mb-3">
+                                <a href="{% url 'qr_redirect' qr.id %}" class="btn btn-primary" target="_blank">
+                                    Тестировать перенаправление
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
