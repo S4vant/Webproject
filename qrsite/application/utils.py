@@ -39,37 +39,28 @@ def create_qr_code(data, size=10, format='png', background_image=None, fill_colo
     else:
         img = qr.make_image(fill_color=fill_color, back_color=back_color)
     
-    # Если указано фоновое изображение
-    if background_image and format != 'svg':  # SVG не поддерживает фоновые изображения
+    # Если есть фоновое изображение, добавляем его
+    if background_image and format != 'svg':
         try:
             # Открываем фоновое изображение
-            bg_img = Image.open(background_image)
-            
-            # Изменяем размер фонового изображения под размер QR-кода
-            bg_img = bg_img.resize((img.size[0], img.size[1]))
-            
-            # Создаем маску для QR-кода
-            mask = Image.new('L', img.size, 0)
-            draw = ImageDraw.Draw(mask)
-            draw.rectangle((0, 0, img.size[0], img.size[1]), fill=255)
-            
-            # Накладываем QR-код на фоновое изображение
-            bg_img.paste(img, (0, 0), mask)
-            img = bg_img
-            
+            bg = Image.open(background_image)
+            # Изменяем размер фона под размер QR-кода
+            bg = bg.resize((img.size[0], img.size[1]))
+            # Создаем новое изображение с альфа-каналом
+            new_img = Image.new('RGBA', img.size, (255, 255, 255, 0))
+            # Накладываем QR-код на фон
+            new_img.paste(bg, (0, 0))
+            new_img.paste(img, (0, 0), img)
+            img = new_img
         except Exception as e:
             print(f"Ошибка при добавлении фонового изображения: {e}")
     
-    # Преобразуем формат 'JPG' в 'JPEG'
-    if format.lower() == 'jpg':
-        format = 'JPEG'
-    
-    # Сохраняем результат в BytesIO
+    # Сохраняем в BytesIO
     output = BytesIO()
     if format == 'svg':
-        img.save(output)
+        img.save(output, format='SVG')
     else:
-        img.save(output, format=format.upper())  # Убедитесь, что формат передается в верхнем регистре
+        img.save(output, format=format.upper())
     output.seek(0)
     
     return output
@@ -158,3 +149,112 @@ def download_qr_code(qr_code, filename):
     response = HttpResponse(qr_code.getvalue(), content_type=f'image/{qr_code.format}')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+def create_beatiful_qr(data, background_image, size=10, format='png'):
+    try:
+        # Создаём QR-код
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=size,
+            border=1,
+        )
+        qr.add_data(data)
+        qr.make(fit=True)
+        
+        # Создаем QR-код с прозрачным фоном
+        qr_img = qr.make_image(fill_color="black", back_color=(255,255,255,0)).convert("RGBA")
+        
+        # Создаем маску для QR-кода
+        # Открываем фоновое изображение
+        if hasattr(background_image, 'file'):
+            bg = Image.open(background_image.file).convert("RGBA")
+        else:
+            bg = Image.open(background_image).convert("RGBA")
+
+        # Изменяем размер фона под размер QR-кода
+        bg = bg.resize(qr_img.size)
+        
+        img = qr.get_matrix()
+        # Создаем новое изображение
+        coeff = size
+        coeff_small = round(coeff / 3)
+        length_qr = len(img) * coeff
+        
+        background = bg
+        back_im = Image.new('RGBA', (length_qr, length_qr), (0, 0, 0, 0))
+
+        # Определение цветов
+        black_1 = (0, 0, 0, 0)
+        black_2 = (0, 0, 0, 230)
+        white_1 = (255, 255, 255, 50)
+        white_2 = (255, 255, 255, 230)
+
+        idraw = ImageDraw.Draw(back_im, "RGBA")
+
+        # Рисование QR-кода
+        x = 0
+        y = 0
+        for string in qr.get_matrix():
+            for i in string:
+                if i:
+                    idraw.ellipse(
+                        (x + coeff_small, y + coeff_small, x + coeff - coeff_small, y + coeff - coeff_small),
+                        fill=black_2
+                    )
+                else:
+                    idraw.ellipse(
+                        (x + coeff_small, y + coeff_small, x + coeff - coeff_small, y + coeff - coeff_small),
+                        fill=white_2
+                    )
+                x += coeff
+            x = 0
+            y += coeff
+
+        # Рисование маркеров позиционирования
+        idraw.rectangle((0, 0, coeff * 9, coeff * 9), fill=white_1)
+        idraw.rectangle((length_qr - coeff * 9, 0, length_qr, coeff * 9), fill=white_1)
+        idraw.rectangle((0, length_qr - coeff * 9, coeff * 9, length_qr), fill=white_1)
+        idraw.rectangle(
+            (length_qr - coeff * 10, length_qr - coeff * 9, length_qr - coeff * 6, length_qr - coeff * 6),
+            fill=white_1
+        )
+
+        # Рисование дополнительных элементов
+        rectangles = [
+            (coeff, coeff, coeff * 8, coeff * 2),  # Верхний горизонтальный
+            (length_qr - coeff * 8, coeff, length_qr - coeff, coeff * 2),  # Верхний правый
+            (coeff, coeff * 7, coeff * 8, coeff * 8),  # Нижний левый
+            (length_qr - coeff * 8, coeff * 7, length_qr - coeff, coeff * 8),  # Нижний правый
+            (coeff, length_qr - coeff * 8, coeff * 8, length_qr - coeff * 7),  # Левый вертикальный
+            (coeff, length_qr - coeff * 2, coeff * 8, length_qr - coeff),  # Правый вертикальный
+            (length_qr - coeff * 8, length_qr - coeff * 8, length_qr - coeff * 7, length_qr - coeff * 7),  # Центральный квадрат
+            (coeff * 3, coeff * 3, coeff * 6, coeff * 6),  # Центральный квадрат 2
+            (length_qr - coeff * 6, coeff * 3, length_qr - coeff * 3, coeff * 6),  # Центральный квадрат 3
+            (coeff * 3, length_qr - coeff * 6, coeff * 6, length_qr - coeff * 3),  # Центральный квадрат 4
+            (coeff, coeff, coeff * 2, coeff * 8),  # Левый вертикальный 2
+            (coeff * 7, coeff, coeff * 8, coeff * 8),  # Правый вертикальный 2
+            (length_qr - coeff * 2, coeff, length_qr - coeff, coeff * 8),  # Правый вертикальный 3
+            (length_qr - coeff * 8, coeff, length_qr - coeff * 7, coeff * 8),  # Левый вертикальный 3
+            (coeff, length_qr - coeff * 8, coeff * 2, length_qr - coeff),  # Левый вертикальный 4
+            (coeff * 7, length_qr - coeff * 8, coeff * 8, length_qr - coeff),  # Правый вертикальный 4
+            (length_qr - coeff * 10, length_qr - coeff * 10, length_qr - coeff * 9, length_qr - coeff * 5),  # Нижний правый угол
+            (length_qr - coeff * 6, length_qr - coeff * 10, length_qr - coeff * 5, length_qr - coeff * 5),  # Нижний правый угол 2
+            (length_qr - coeff * 10, length_qr - coeff * 10, length_qr - coeff * 6, length_qr - coeff * 9),  # Нижний правый угол 3
+            (length_qr - coeff * 10, length_qr - coeff * 6, length_qr - coeff * 6, length_qr - coeff * 5)  # Нижний правый угол 4
+        ]
+        
+        for coords in rectangles:
+            idraw.rectangle(coords, fill=black_2)
+
+        # Наложение QR-кода на фоновое изображение
+        background.paste(back_im, (0, 0), back_im)
+        # Сохраняем результат
+        output = BytesIO()
+        bg.save(output, format=format.upper())
+        output.seek(0)
+        return output
+
+    except Exception as e:
+        print(f"Ошибка при генерации красивого QR-кода: {e}")
+        return create_qr_code(data, size, format)

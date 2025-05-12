@@ -2,15 +2,17 @@ from django.contrib.auth import logout, login, authenticate, update_session_auth
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.utils import timezone
 from django.conf import settings
 from .forms import CustomUserCreationForm, StaticQRForm, DynamicQRForm, ProfileForm, CustomPasswordChangeForm, EditDynamicQRForm, StaticQRCodeForm
 from .models import QRCode, StaticQRCode, DynamicQRCode
-from .utils import save_qr_code, create_qr_code
+from .utils import save_qr_code, create_qr_code, create_beatiful_qr
 from .decorators import login_required
 import os
 import hashlib
+import urllib.parse
+from io import BytesIO
 
 def register(request):
     """
@@ -211,10 +213,31 @@ def download_qr(request, qr_id):
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Файл QR-кода не найден: {file_path}")
         
+        # Определяем правильный MIME-тип
+        mime_types = {
+            'png': 'application/octet-stream',
+            'jpg': 'application/octet-stream',
+            'jpeg': 'application/octet-stream',
+            'svg': 'application/octet-stream'
+        }
+        content_type = mime_types.get(qr.format.lower(), 'application/octet-stream')
+        
         # Открываем файл и отправляем его
         with open(file_path, 'rb') as f:
-            response = HttpResponse(f.read(), content_type=f'image/{qr.format}')
-            response['Content-Disposition'] = f'attachment; filename="{qr.title}.{qr.format}"'
+            response = HttpResponse(f.read(), content_type=content_type)
+            
+            # Формируем имя файла
+            filename = f"{qr.title}.{qr.format}"
+            
+            # Кодируем имя файла для корректного отображения в браузере
+            encoded_filename = urllib.parse.quote(filename)
+            
+            # Устанавливаем заголовки для принудительного скачивания
+            response['Content-Disposition'] = f'attachment; filename="{encoded_filename}"'
+            response['Content-Length'] = os.path.getsize(file_path)
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
             return response
             
     except Exception as e:
@@ -223,7 +246,14 @@ def download_qr(request, qr_id):
 
 @login_required
 def qr_delete(request, qr_id):
-    qr = get_object_or_404(QRCode, id=qr_id, user=request.user)
+    try:
+        qr = DynamicQRCode.objects.get(id=qr_id)
+    except DynamicQRCode.DoesNotExist:
+        # Если не найден, пробуем получить статический
+        try:
+            qr = QRCode.objects.get(id=qr_id)
+        except QRCode.DoesNotExist:
+            raise Http404("QR-код не найден")
     if request.method == 'POST':
         qr.delete()
         messages.success(request, 'QR-код успешно удален')
@@ -410,5 +440,187 @@ def edit_static_qr(request, qr_id):
         'form': form,
         'qr': qr
     })
+
+@login_required
+def preview_qr(request):
+    """
+    Предпросмотр QR-кода без сохранения в базу данных
+    """
+    if request.method == 'POST':
+        form_data = request.POST
+        qr_type = form_data.get('qr_type')
+        
+        # Получаем данные формы
+        title = form_data.get('title', '')
+        size = int(form_data.get('size', 10))
+        format = form_data.get('format', 'png')
+        
+        # Создаем временный QR-код
+        if qr_type == 'dynamic':
+            # Создаем временный объект DynamicQRCode для получения redirect_url
+            temp_qr = DynamicQRCode(
+                user=request.user,
+                title=title,
+                target_url=form_data.get('target_url', ''),
+                format=format,
+                size=size
+            )
+            content = temp_qr.get_redirect_url()
+        else:
+            content = form_data.get('content', '')
+            
+        # Получаем фоновое изображение
+        background_image = request.FILES.get('background_image')
+        
+        # Генерируем QR-код
+        qr_code = create_qr_code(
+            data=content,
+            size=size,
+            format=format,
+            background_image=background_image
+        )
+        
+        # Отправляем изображение
+        response = HttpResponse(qr_code.getvalue(), content_type=f'image/{format}')
+        response['Content-Disposition'] = 'inline'
+        return response
+    
+    return HttpResponseBadRequest('Неверный метод запроса')
+
+@login_required
+def beautiful_qr_preview(request):
+    """
+    Предпросмотр красивого QR-кода с фоновым изображением
+    """
+    if request.method == 'POST':
+        form_data = request.POST
+        qr_type = form_data.get('qr_type')
+        
+        # Получаем данные формы
+        title = form_data.get('title', '')
+        size = int(form_data.get('size', 10))
+        format = form_data.get('format', 'png')
+        
+        # Создаем временный QR-код
+        if qr_type == 'dynamic':
+            # Создаем временный объект DynamicQRCode для получения redirect_url
+            temp_qr = DynamicQRCode(
+                user=request.user,
+                title=title,
+                target_url=form_data.get('target_url', ''),
+                format=format,
+                size=size
+            )
+            content = temp_qr.get_redirect_url()
+        else:
+            content = form_data.get('content', '')
+            
+        # Получаем фоновое изображение
+        background_image = request.FILES.get('background_image')
+        if not background_image:
+            return HttpResponseBadRequest('Необходимо загрузить фоновое изображение')
+            
+        # Генерируем красивый QR-код
+        from .utils import create_beatiful_qr
+        qr_code = create_beatiful_qr(
+            data=content,
+            background_image=background_image,
+            size=size,
+            format=format
+        )
+        
+        # Отправляем изображение
+        response = HttpResponse(qr_code.getvalue(), content_type=f'image/{format}')
+        response['Content-Disposition'] = 'inline'
+        return response
+    
+    return HttpResponseBadRequest('Неверный метод запроса')
+
+@login_required
+def save_qr(request):
+    """
+    Сохранение QR-кода в базу данных
+    """
+    if request.method == 'POST':
+        try:
+            form_data = request.POST
+            qr_type = form_data.get('qr_type')
+            is_dynamic = form_data.get('is_dynamic') == '1'  # Получаем значение is_dynamic
+            
+            if not qr_type or qr_type not in ['static', 'dynamic']:
+                return JsonResponse({'error': 'Неверный тип QR-кода'}, status=400)
+            
+            # Получаем данные формы
+            title = form_data.get('title', '')
+            size = int(form_data.get('size', 10))
+            format = form_data.get('format', 'png')
+            is_public = form_data.get('is_public') == 'on'
+            
+            # Создаем QR-код
+            if qr_type == 'dynamic' or is_dynamic:
+                target_url = form_data.get('target_url', '')
+                if not target_url:
+                    return JsonResponse({'error': 'URL не может быть пустым'}, status=400)
+                    
+                qr = DynamicQRCode(
+                    user=request.user,
+                    title=title,
+                    target_url=target_url,
+                    format=format,
+                    size=size,
+                    is_public=is_public,
+                    is_dynamic=True  # Явно устанавливаем is_dynamic
+                )
+                # Сначала сохраняем QR-код, чтобы получить id
+                qr.save()
+                # Генерируем URL переадресации
+                content = qr.get_redirect_url()
+                print(f"Generated redirect URL: {content}")  # Для отладки
+            else:
+                content = form_data.get('content', '')
+                if not content:
+                    return JsonResponse({'error': 'Содержимое не может быть пустым'}, status=400)
+                    
+                qr = StaticQRCode(
+                    user=request.user,
+                    title=title,
+                    content=content,
+                    format=format,
+                    size=size,
+                    is_public=is_public,
+                    is_dynamic=False  # Явно устанавливаем is_dynamic
+                )
+            
+            # Получаем фоновое изображение
+            background_image = request.FILES.get('background_image')
+            
+            # Генерируем QR-код
+            if background_image:
+                qr_code = create_beatiful_qr(
+                    data=content,
+                    background_image=background_image,
+                    size=size,
+                    format=format
+                )
+            else:
+                qr_code = create_qr_code(
+                    data=content,
+                    size=size,
+                    format=format
+                )
+            
+            # Сохраняем QR-код
+            filepath = save_qr_code(qr_code, request.user, title, qr_type, format)
+            qr.qr_code = filepath
+            qr.save()
+            
+            messages.success(request, 'QR-код успешно сохранен!')
+            return redirect('qr_detail', qr_id=qr.id)
+            
+        except Exception as e:
+            print(f"Error in save_qr: {str(e)}")  # Для отладки
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    return JsonResponse({'error': 'Неверный метод запроса'}, status=400)
 
 # 

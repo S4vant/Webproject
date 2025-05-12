@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление QR-кода{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">Подтверждение удаления</h3>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Вы уверены, что хотите удалить QR-код "{{ qr.title }}"?</p>
+                    {% if qr.is_dynamic %}
+                    <p class="text-muted">Это действие нельзя отменить.</p>
+                    {% else %}
+                    <p class="text-muted">При удалении данного кода поддержание ссылки на него невозможно.</p>
+                    <li class="list-group-item">
+                        <strong>Целевая ссылка:</strong>
+                        <div class="mt-2">
+                            <code>{{ qr.target_url }}</code>
+                        </div>
+                    </li>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger">Удалить</button>
+                            <a href="{% url 'qr_detail' qr.id %}" class="btn btn-secondary">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

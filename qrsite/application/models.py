@@ -38,6 +38,7 @@ class QRCode(models.Model):
         ('png', 'PNG'),
         ('svg', 'SVG'),
         ('jpg', 'JPG'),
+        ('pdf', 'PDF'),
     ]
     
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='qr_codes')
@@ -51,7 +52,7 @@ class QRCode(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_dynamic = models.BooleanField(default=False)
-    
+    background_image = models.ImageField(upload_to='qr_codes/backgrounds/', blank=True, null=True)
     def __str__(self):
         return self.title
     
@@ -60,7 +61,7 @@ class QRCode(models.Model):
 
 
 class StaticQRCode(QRCode):
-    background_image = models.ImageField(upload_to='qr_codes/backgrounds/', blank=True, null=True)
+    
 
     def __str__(self):
         return f"{self.title} (Статический)"

@@ -12,12 +12,24 @@
                     <h3 class="card-title mb-0">{{ qr.title }}</h3>
                     {% if user == qr.user %}
                     <div class="btn-group">
+                        {% if qr.is_dynamic %}
                         <a href="{% url 'edit_dynamic_qr' qr.id %}" class="btn btn-light btn-sm">
                             <i class="bi bi-pencil me-2"></i>Редактировать
                         </a>
+                        
                         <a href="{% url 'qr_delete' qr.id %}" class="btn btn-danger btn-sm">
                             <i class="bi bi-trash me-2"></i>Удалить
                         </a>
+                        
+                        {% else %}
+                        <a href="{% url 'edit_static_qr' qr.id %}" class="btn btn-light btn-sm">
+                            <i class="bi bi-pencil me-2"></i>Редактировать
+                        </a>
+
+                        <a href="{% url 'qr_delete' qr.id %}" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash me-2"></i>Удалить
+                        </a>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>
@@ -45,6 +57,9 @@
                                     {% else %}
                                     Статический
                                     {% endif %}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Формат:</strong> {{ qr.format }}
                                 </li>
                                 <li class="list-group-item">
                                     <strong>Создан:</strong> {{ qr.created_at|date:"d.m.Y H:i" }}

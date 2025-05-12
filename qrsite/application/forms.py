@@ -41,6 +41,7 @@ class StaticQRForm(forms.ModelForm):
         ('png', 'PNG'),
         ('svg', 'SVG'),
         ('jpg', 'JPG'),
+        ('pdf', 'PDF'),
     ]
     
     size = forms.IntegerField(
@@ -76,6 +77,7 @@ class DynamicQRForm(forms.ModelForm):
         ('png', 'PNG'),
         ('svg', 'SVG'),
         ('jpg', 'JPG'),
+        ('pdf', 'PDF'),
     ]
     
     size = forms.IntegerField(
