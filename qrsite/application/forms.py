@@ -1,6 +1,6 @@
 # application/forms.py
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordChangeForm
 from django.contrib.auth import get_user_model
 from .models import CustomUser, StaticQRCode, DynamicQRCode, QRCode
 
@@ -104,3 +104,31 @@ class DynamicQRForm(forms.ModelForm):
             'target_url': forms.URLInput(attrs={'class': 'form-control'}),
             'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+class EditDynamicQRForm(forms.ModelForm):
+    class Meta:
+        model = DynamicQRCode
+        fields = ['title', 'target_url', 'is_public']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'target_url': forms.URLInput(attrs={'class': 'form-control'}),
+            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    old_password = forms.CharField(
+        label='Текущий пароль',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+    new_password1 = forms.CharField(
+        label='Новый пароль',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+    new_password2 = forms.CharField(
+        label='Подтверждение нового пароля',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+
+    class Meta:
+        model = get_user_model()
+        fields = ('old_password', 'new_password1', 'new_password2')

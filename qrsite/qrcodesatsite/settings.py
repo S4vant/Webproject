@@ -21,7 +21,6 @@ AUTH_USER_MODEL = 'application.CustomUser'
 
 INSTALLED_APPS = [
     'application.apps.ApplicationConfig',
-    'make_qr',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -87,7 +86,7 @@ USE_TZ = True
 
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
-
+SITE_URL = 'http://127.0.0.1:8000'
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

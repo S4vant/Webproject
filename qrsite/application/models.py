@@ -1,9 +1,10 @@
 # users/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.contrib.auth import get_user_model
 from django.utils import timezone
-from django.contrib.auth.models import User
+from django.conf import settings
+import hashlib
+
 
 
 class CustomUser(AbstractUser):
@@ -68,5 +69,20 @@ class DynamicQRCode(QRCode):
     target_url = models.URLField()
     redirect_count = models.IntegerField(default=0)
     
+    def get_hashed_user_id(self):
+        """Получает хешированный ID пользователя"""
+        # Используем соль для дополнительной безопасности
+        salt = settings.SECRET_KEY[:8]
+        user_id_str = f"{self.user.id}{salt}"
+        return hashlib.sha256(user_id_str.encode()).hexdigest()[:16]
+    
+    def get_redirect_url(self):
+        """Получает полный URL для переадресации"""
+        hashed_id = self.get_hashed_user_id()
+        return f"{settings.SITE_URL}/redirect/{hashed_id}/{self.id}"
+    
     def __str__(self):
         return f"{self.title} (Динамический)"
+    
+    class Meta:
+        db_table = 'application_dynamicqrcode'

@@ -1,16 +1,16 @@
-# users/views.py
-from django.urls import reverse_lazy
-from django.contrib.auth import logout, login, authenticate
+from django.contrib.auth import logout, login, authenticate, update_session_auth_hash
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, Http404
 from django.utils import timezone
 from django.conf import settings
-from .forms import CustomUserCreationForm, StaticQRForm, DynamicQRForm, ProfileForm
+from .forms import CustomUserCreationForm, StaticQRForm, DynamicQRForm, ProfileForm, CustomPasswordChangeForm, EditDynamicQRForm
 from .models import QRCode, StaticQRCode, DynamicQRCode
 from .utils import save_qr_code, create_qr_code
+from .decorators import login_required
 import os
+import hashlib
 
 def register(request):
     """
@@ -74,6 +74,7 @@ def edit_profile(request):
         form = ProfileForm(instance=request.user)
     return render(request, 'edit_profile.html', {'form': form})
 
+
 @login_required
 def create_static_qr(request):
     """
@@ -119,14 +120,23 @@ def create_dynamic_qr(request):
         if form.is_valid():
             qr = form.save(commit=False)
             qr.user = request.user
-   
+            qr.is_dynamic = True
+            
+            # Сначала сохраняем QR-код, чтобы получить id
+            qr.save()
+            
             # Получаем размер и формат из формы
             size = form.cleaned_data['size']
             format = form.cleaned_data['format']
             
-            # Генерация QR-кода
+            # Генерируем QR-код с URL переадресации
+            redirect_url = qr.get_redirect_url()
+            print(f"Generated redirect URL: {redirect_url}")
+            print(f"User ID: {qr.user.id}")
+            print(f"Hashed ID: {qr.get_hashed_user_id()}")
+            
             qr_code = create_qr_code(
-                data=qr.target_url,  # Убедитесь, что используется правильное поле
+                data=redirect_url,
                 size=size,
                 format=format,
                 background_image=request.FILES.get('background_image')
@@ -138,14 +148,30 @@ def create_dynamic_qr(request):
             qr.save()
             
             messages.success(request, 'QR-код успешно создан!')
-            return redirect('qr_detail', qr_id=qr.id)  # Перенаправление на страницу деталей QR-кода
+            return redirect('qr_detail', qr_id=qr.id)
     else:
         form = DynamicQRForm()
     
     return render(request, 'create_dynamic_qr.html', {'form': form})
 
 def qr_detail(request, qr_id):
-    qr = get_object_or_404(QRCode, id=qr_id)
+    # Сначала пытаемся получить динамический QR-код
+    try:
+        qr = DynamicQRCode.objects.get(id=qr_id)
+    except DynamicQRCode.DoesNotExist:
+        # Если не найден, пробуем получить статический
+        try:
+            qr = StaticQRCode.objects.get(id=qr_id)
+        except StaticQRCode.DoesNotExist:
+            raise Http404("QR-код не найден")
+    
+    # Определяем тип данных для отображения
+    if isinstance(qr, DynamicQRCode):
+        qr_data = qr.target_url
+        redirect_count = qr.redirect_count
+    else:
+        qr_data = qr.content
+        redirect_count = None
     
     # Проверка доступа
     if not qr.is_public and request.user != qr.user:
@@ -161,6 +187,8 @@ def qr_detail(request, qr_id):
         'qr': qr,
         'is_static': isinstance(qr, StaticQRCode),
         'is_dynamic': isinstance(qr, DynamicQRCode),
+        'qr_data': qr_data,
+        'redirect_count': redirect_count,
     }
     return render(request, 'qr_detail.html', context)
 
@@ -228,12 +256,10 @@ def qr_edit(request, qr_id):
                 size=form.cleaned_data['size'],
                 format=form.cleaned_data['format'],
                 background_image=form.cleaned_data.get('background_image'),
-
-                # logo=form.cleaned_data.get('logo')
             )
             
             # Сохраняем QR-код
-            qr.image = save_qr_code(qr_code, request.user, qr.title,qr_type,  qr.format)
+            qr.image = save_qr_code(qr_code, request.user, qr.title, qr_type, qr.format)
             qr.save()
             
             messages.success(request, 'QR-код успешно обновлен')
@@ -252,8 +278,41 @@ def qr_edit(request, qr_id):
     }
     return render(request, 'qr_edit.html', context)
 
-def qr_redirect(request, qr_id):
-    return handle_qr_redirect(qr_id)
+def qr_redirect(request, hashed_id, qr_id):
+    """
+    Обработка переадресации с QR-кода
+    """
+    try:
+        # Получаем QR-код
+        qr = get_object_or_404(DynamicQRCode, id=qr_id)
+        
+        # Проверяем хеш ID пользователя
+        salt = settings.SECRET_KEY[:8]
+        user_id_str = f"{qr.user.id}{salt}"
+        expected_hash = hashlib.sha256(user_id_str.encode()).hexdigest()[:16]
+        
+        print(f"Received hash: {hashed_id}")
+        print(f"Expected hash: {expected_hash}")
+        print(f"User ID: {qr.user.id}")
+        print(f"Salt: {salt}")
+        
+        if hashed_id != expected_hash:
+            raise Http404("Неверный QR-код")
+        
+        # Проверяем активность QR-кода
+        if not qr.is_public:
+            raise Http404("QR-код неактивен")
+        
+        # Увеличиваем счетчики
+        qr.views += 1
+        qr.redirect_count += 1
+        qr.save()
+        
+        # Выполняем переадресацию
+        return redirect(qr.target_url)
+        
+    except Http404:
+        raise Http404("QR-код не найден")
 
 def examples_list(request):
     examples = QRCode.objects.filter(is_public=True).order_by('-created_at')
@@ -275,3 +334,57 @@ def qr_list(request):
     }
     return render(request, 'qr_list.html', context)
 
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = CustomPasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Обновляем сессию, чтобы пользователь не вышел из системы
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Пароль успешно изменен!')
+            return redirect('password_change_done')
+    else:
+        form = CustomPasswordChangeForm(request.user)
+    return render(request, 'change_password.html', {'form': form})
+
+@login_required
+def password_change_done(request):
+    messages.success(request, 'Ваш пароль был успешно изменен!')
+    return redirect('profile')
+
+@login_required
+def edit_dynamic_qr(request, qr_id):
+    """
+    Редактирование динамического QR-кода
+    """
+    qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = EditDynamicQRForm(request.POST, instance=qr)
+        if form.is_valid():
+            qr = form.save()
+            messages.success(request, 'QR-код успешно обновлен!')
+            return redirect('qr_detail', qr_id=qr.id)
+    else:
+        form = EditDynamicQRForm(instance=qr)
+    
+    context = {
+        'form': form,
+        'qr': qr,
+        'current_url': qr.get_redirect_url(),
+    }
+    return render(request, 'edit_dynamic_qr.html', context)
+
+def auth_required(request):
+    """
+    Представление для отображения страницы с сообщением о необходимости авторизации
+    """
+    if request.user.is_authenticated:
+        return redirect('home')
+    return render(request, 'auth_required.html', {
+        'next': request.GET.get('next', ''),
+        'title': 'Требуется авторизация'
+    })
+
+# 
