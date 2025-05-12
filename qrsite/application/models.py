@@ -60,8 +60,8 @@ class QRCode(models.Model):
 
 
 class StaticQRCode(QRCode):
+    background_image = models.ImageField(upload_to='qr_codes/backgrounds/', blank=True, null=True)
 
-    
     def __str__(self):
         return f"{self.title} (Статический)"
 

@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.http import HttpResponse, Http404
 from django.utils import timezone
 from django.conf import settings
-from .forms import CustomUserCreationForm, StaticQRForm, DynamicQRForm, ProfileForm, CustomPasswordChangeForm, EditDynamicQRForm
+from .forms import CustomUserCreationForm, StaticQRForm, DynamicQRForm, ProfileForm, CustomPasswordChangeForm, EditDynamicQRForm, StaticQRCodeForm
 from .models import QRCode, StaticQRCode, DynamicQRCode
 from .utils import save_qr_code, create_qr_code
 from .decorators import login_required
@@ -134,6 +134,8 @@ def create_dynamic_qr(request):
             print(f"Generated redirect URL: {redirect_url}")
             print(f"User ID: {qr.user.id}")
             print(f"Hashed ID: {qr.get_hashed_user_id()}")
+            print(f"Target URL: {qr.target_url}")
+            print(f"QR ID: {qr.id}")
             
             qr_code = create_qr_code(
                 data=redirect_url,
@@ -161,8 +163,8 @@ def qr_detail(request, qr_id):
     except DynamicQRCode.DoesNotExist:
         # Если не найден, пробуем получить статический
         try:
-            qr = StaticQRCode.objects.get(id=qr_id)
-        except StaticQRCode.DoesNotExist:
+            qr = QRCode.objects.get(id=qr_id)
+        except QRCode.DoesNotExist:
             raise Http404("QR-код не найден")
     
     # Определяем тип данных для отображения
@@ -385,6 +387,28 @@ def auth_required(request):
     return render(request, 'auth_required.html', {
         'next': request.GET.get('next', ''),
         'title': 'Требуется авторизация'
+    })
+
+@login_required
+def edit_static_qr(request, qr_id):
+    """Редактирование статического QR-кода"""
+    try:
+        qr = StaticQRCode.objects.get(id=qr_id, user=request.user)
+    except StaticQRCode.DoesNotExist:
+        raise Http404("QR-код не найден")
+
+    if request.method == 'POST':
+        form = StaticQRCodeForm(request.POST, request.FILES, instance=qr)
+        if form.is_valid():
+            qr = form.save()
+            messages.success(request, 'QR-код успешно обновлен')
+            return redirect('qr_detail', qr_id=qr.id)
+    else:
+        form = StaticQRCodeForm(instance=qr)
+
+    return render(request, 'edit_static_qr.html', {
+        'form': form,
+        'qr': qr
     })
 
 # 

@@ -24,7 +24,11 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <img src="{{ qr.qr_code.url }}" alt="QR Code" class="img-fluid">
+                            {% if qr.qr_code and qr.qr_code.url %}
+                                <img src="{{ qr.qr_code.url }}" alt="QR Code" class="img-fluid">
+                            {% else %}
+                                <div class="alert alert-warning">QR-код ещё не сгенерирован.</div>
+                            {% endif %}
                             <div class="mt-3">
                                 <a href="{% url 'download_qr' qr.id %}" class="btn btn-success">
                                     <i class="bi bi-download me-2"></i>Скачать QR-код
@@ -47,6 +51,9 @@
                                 </li>
                                 <li class="list-group-item">
                                     <strong>Просмотров:</strong> {{ qr.views }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Публичный:</strong> {{ qr.is_public }}
                                 </li>
                                 {% if qr.is_dynamic %}
                                 <li class="list-group-item">

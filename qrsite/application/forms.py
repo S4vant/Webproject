@@ -132,3 +132,17 @@ class CustomPasswordChangeForm(PasswordChangeForm):
     class Meta:
         model = get_user_model()
         fields = ('old_password', 'new_password1', 'new_password2')
+
+class StaticQRCodeForm(forms.ModelForm):
+    """Форма для редактирования статического QR-кода"""
+    class Meta:
+        model = StaticQRCode
+        fields = ['title', 'content', 'format', 'size', 'is_public', 'background_image']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'format': forms.Select(attrs={'class': 'form-control'}),
+            'size': forms.NumberInput(attrs={'class': 'form-control'}),
+            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'background_image': forms.FileInput(attrs={'class': 'form-control'}),
+        }

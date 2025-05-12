@@ -87,6 +87,11 @@ USE_TZ = True
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 SITE_URL = 'http://127.0.0.1:8000'
+
+# Настройки для смены пароля
+PASSWORD_CHANGE_REDIRECT_URL = 'password_change_done'
+PASSWORD_RESET_REDIRECT_URL = 'password_reset_done'
+
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
