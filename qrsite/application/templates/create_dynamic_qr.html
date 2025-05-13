@@ -4,7 +4,7 @@
 {% block title %}Создание динамического QR-кода{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container mt-4">
     <div class="row">
         <div class="col-md-6">
             <div class="card shadow">
@@ -12,78 +12,34 @@
                     <h3 class="mb-0">Создание динамического QR-кода</h3>
                 </div>
                 <div class="card-body">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }}">
-                                {{ message }}
+                    <form method="post" enctype="multipart/form-data" id="qrForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="qr_type" value="dynamic">
+                        
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ field.errors }}
+                                    </div>
+                                {% endif %}
                             </div>
                         {% endfor %}
-                    {% endif %}
-                    
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
                         
                         <div class="mb-3">
-                            <label for="{{ form.title.id_for_label }}" class="form-label">Название</label>
-                            {{ form.title }}
-                            {% if form.title.errors %}
-                                <div class="alert alert-danger">
-                                    {{ form.title.errors }}
-                                </div>
-                            {% endif %}
+                            <label for="background_image" class="form-label">Фоновое изображение</label>
+                            <input type="file" class="form-control" id="background_image" name="background_image" accept="image/*">
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="{{ form.target_url.id_for_label }}" class="form-label">Целевой URL</label>
-                            {{ form.target_url }}
-                            {% if form.target_url.errors %}
-                                <div class="alert alert-danger">
-                                    {{ form.target_url.errors }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.size.id_for_label }}" class="form-label">Размер QR-кода</label>
-                            {{ form.size }}
-                            <div class="form-text">{{ form.size.help_text }}</div>
-                            {% if form.size.errors %}
-                                <div class="alert alert-danger">
-                                    {{ form.size.errors }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.format.id_for_label }}" class="form-label">Формат</label>
-                            {{ form.format }}
-                            {% if form.format.errors %}
-                                <div class="alert alert-danger">
-                                    {{ form.format.errors }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.background_image.id_for_label }}" class="form-label">Фоновое изображение</label>
-                            {{ form.background_image }}
-                            <div class="form-text">Не поддерживается для SVG формата</div>
-                            {% if form.background_image.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.background_image.errors }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3 form-check">
-                            {{ form.is_public }}
-                            <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
-                                Сделать QR-код публичным
-                            </label>
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Создать QR-код</button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" id="previewBtn">Предпросмотр</button>
+                            <button type="button" class="btn btn-success" id="saveBtn">Сохранить</button>
+                            <button type="button" class="btn btn-warning" id="beautifulBtn">Красивый QR</button>
                         </div>
                     </form>
                 </div>
@@ -96,14 +52,126 @@
                     <h3 class="mb-0">Предпросмотр</h3>
                 </div>
                 <div class="card-body text-center">
-                    <div id="qr-preview" class="mb-3">
-                        <img src="{% static 'images/qr_placeholder.png' %}" alt="Предпросмотр QR-кода" 
-                             class="img-fluid" style="max-width: 300px;">
+                    <div id="previewContainer">
+                        <p class="text-muted">Нажмите "Предпросмотр" для генерации QR-кода</p>
                     </div>
-                    <p class="text-muted">Предпросмотр будет обновлен после создания QR-кода</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('qrForm');
+    const previewBtn = document.getElementById('previewBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const beautifulBtn = document.getElementById('beautifulBtn');
+    const previewContainer = document.getElementById('previewContainer');
+    const backgroundImageInput = document.getElementById('background_image');
+    
+    // Предотвращаем стандартную отправку формы
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+    });
+    
+    // Функция для проверки наличия фонового изображения
+    function checkBackgroundImage() {
+        if (!backgroundImageInput.files.length) {
+            alert('Пожалуйста, загрузите фоновое изображение');
+            return false;
+        }
+        return true;
+    }
+    
+    previewBtn.addEventListener('click', function() {
+        const formData = new FormData(form);
+        formData.append('qr_type', 'dynamic'); // Явно добавляем тип QR-кода
+        
+        fetch('{% url "preview_qr" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            const imageUrl = URL.createObjectURL(blob);
+            previewContainer.innerHTML = `<img src="${imageUrl}" class="img-fluid" alt="QR Code Preview">`;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            previewContainer.innerHTML = '<p class="text-danger">Ошибка при генерации предпросмотра</p>';
+        });
+    });
+    
+    beautifulBtn.addEventListener('click', function() {
+        if (!checkBackgroundImage()) return;
+        
+        const formData = new FormData(form);
+        formData.append('qr_type', 'dynamic'); // Явно добавляем тип QR-кода
+        formData.append('is_dynamic', 1); // Явно добавляем тип QR-кода
+        previewContainer.innerHTML = '<div class="spinner-border text-warning" role="status"><span class="visually-hidden">Загрузка...</span></div>';
+        
+        fetch('{% url "beautiful_qr_preview" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка при генерации красивого QR-кода');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const imageUrl = URL.createObjectURL(blob);
+            previewContainer.innerHTML = `<img src="${imageUrl}" class="img-fluid" alt="Beautiful QR Preview" style="max-width: 300px;">`;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            previewContainer.innerHTML = '<div class="alert alert-danger">Ошибка при генерации красивого QR-кода</div>';
+        });
+    });
+    
+    saveBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        formData.append('qr_type', 'dynamic'); // Явно добавляем тип QR-кода
+        formData.append('is_dynamic', 1); // Явно добавляем тип QR-кода
+        previewContainer.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Сохранение...</span></div>';
+        
+        fetch('{% url "save_qr" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                return response.json();
+            }
+        })
+        .then(data => {
+            if (data && data.error) {
+                previewContainer.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            previewContainer.innerHTML = '<div class="alert alert-danger">Ошибка при сохранении QR-кода</div>';
+        });
+    });
+});
+</script>
+{% endblock %}
 {% endblock %} 

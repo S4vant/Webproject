@@ -4,15 +4,24 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+def load_env(env_path = '.env'):
+    with open(env_path) as f:
+        for line in f:
+            if line.strip() and not line.startswith('#'):
+                
+                key, value = line.strip().split('=',1)
+                os.environ[key] = value
+    
 
+load_env()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-e!&g&5nqvtw9bm0utu_qyd&x!z3px!xsvigzsdi2=qd96f1+o9'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = []
 
@@ -21,7 +30,6 @@ AUTH_USER_MODEL = 'application.CustomUser'
 
 INSTALLED_APPS = [
     'application.apps.ApplicationConfig',
-    'make_qr',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -87,6 +95,11 @@ USE_TZ = True
 
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
+SITE_URL = 'http://127.0.0.1:8000'
+
+# Настройки для смены пароля
+PASSWORD_CHANGE_REDIRECT_URL = 'password_change_done'
+PASSWORD_RESET_REDIRECT_URL = 'password_reset_done'
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'

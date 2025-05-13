@@ -6,8 +6,17 @@ dist/
 wheels/
 *.egg-info
 
-#dbases
-.sqlite3
+#dbase
+*.sqlite3
+*.db
+*.db-journal
+*.db-shm
+
+#images
+*.png
+*.jpg
+*.svg
+
 
 # Pycache
 __pycache__/
@@ -27,3 +36,4 @@ celerybeat.pid
 .venv
 env/
 venv/
+

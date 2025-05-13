@@ -1,6 +1,6 @@
 # application/forms.py
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordChangeForm
 from django.contrib.auth import get_user_model
 from .models import CustomUser, StaticQRCode, DynamicQRCode, QRCode
 
@@ -25,62 +25,6 @@ class CustomUserChangeForm(UserChangeForm):
         model = CustomUser
         fields = ('username', 'email')
 
-class StaticQRCodeForm(forms.ModelForm):
-    background_image = forms.ImageField(
-        required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control'}),
-        help_text='Загрузите изображение для фона QR-кода (не поддерживается для SVG)'
-    )
-    
-    class Meta:
-        model = StaticQRCode
-        fields = ['title', 'content', 'size', 'format', 'is_public', 'background_image']
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'content': forms.Textarea(attrs={'class': 'form-control'}),
-            'size': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 40}),
-            'format': forms.Select(attrs={'class': 'form-control'}),
-            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['format'].choices = [
-            ('png', 'PNG'),
-            ('svg', 'SVG'),
-            ('jpg', 'JPG'),
-        ]
-        self.fields['qr_type'].initial = 'static'
-        self.fields['qr_type'].widget = forms.HiddenInput()
-
-class DynamicQRCodeForm(forms.ModelForm):
-    background_image = forms.ImageField(
-        required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control'}),
-        help_text='Загрузите изображение для фона QR-кода (не поддерживается для SVG)'
-    )
-    
-    class Meta:
-        model = DynamicQRCode
-        fields = ['title', 'target_url', 'size', 'format', 'is_public', 'background_image']
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'target_url': forms.URLInput(attrs={'class': 'form-control'}),
-            'size': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 40}),
-            'format': forms.Select(attrs={'class': 'form-control'}),
-            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['format'].choices = [
-            ('png', 'PNG'),
-            ('svg', 'SVG'),
-            ('jpg', 'JPG'),
-        ]
-        self.fields['qr_type'].initial = 'dynamic'
-        self.fields['qr_type'].widget = forms.HiddenInput()
-
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
@@ -97,6 +41,7 @@ class StaticQRForm(forms.ModelForm):
         ('png', 'PNG'),
         ('svg', 'SVG'),
         ('jpg', 'JPG'),
+        ('pdf', 'PDF'),
     ]
     
     size = forms.IntegerField(
@@ -124,6 +69,7 @@ class StaticQRForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+           
         }
 
 class DynamicQRForm(forms.ModelForm):
@@ -131,6 +77,7 @@ class DynamicQRForm(forms.ModelForm):
         ('png', 'PNG'),
         ('svg', 'SVG'),
         ('jpg', 'JPG'),
+        ('pdf', 'PDF'),
     ]
     
     size = forms.IntegerField(
@@ -152,10 +99,52 @@ class DynamicQRForm(forms.ModelForm):
     )
     
     class Meta:
-        model = QRCode
-        fields = ('title', 'content', 'size', 'format', 'is_public')
+        model = DynamicQRCode
+        fields = ('title','target_url',  'size', 'format', 'is_public')
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'content': forms.URLInput(attrs={'class': 'form-control'}),
+            'target_url': forms.URLInput(attrs={'class': 'form-control'}),
             'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+class EditDynamicQRForm(forms.ModelForm):
+    class Meta:
+        model = DynamicQRCode
+        fields = ['title', 'target_url', 'is_public']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'target_url': forms.URLInput(attrs={'class': 'form-control'}),
+            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    old_password = forms.CharField(
+        label='Текущий пароль',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+    new_password1 = forms.CharField(
+        label='Новый пароль',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+    new_password2 = forms.CharField(
+        label='Подтверждение нового пароля',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+
+    class Meta:
+        model = get_user_model()
+        fields = ('old_password', 'new_password1', 'new_password2')
+
+class StaticQRCodeForm(forms.ModelForm):
+    """Форма для редактирования статического QR-кода"""
+    class Meta:
+        model = StaticQRCode
+        fields = ['title', 'content', 'format', 'size', 'is_public', 'background_image']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'format': forms.Select(attrs={'class': 'form-control'}),
+            'size': forms.NumberInput(attrs={'class': 'form-control'}),
+            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'background_image': forms.FileInput(attrs={'class': 'form-control'}),
         }
