@@ -171,7 +171,8 @@ def create_beatiful_qr(data, background_image, size=10, format='png'):
             bg = Image.open(background_image.file).convert("RGBA")
         else:
             bg = Image.open(background_image).convert("RGBA")
-
+        # if bg.size[1]>img.size[0]:
+        #     bg=bg.thumbnail(img.size, Image.ANTIALIAS)
         # Изменяем размер фона под размер QR-кода
         bg = bg.resize(qr_img.size)
         
@@ -219,7 +220,7 @@ def create_beatiful_qr(data, background_image, size=10, format='png'):
             (length_qr - coeff * 10, length_qr - coeff * 9, length_qr - coeff * 6, length_qr - coeff * 6),
             fill=white_1
         )
-
+        
         # Рисование дополнительных элементов
         rectangles = [
             (coeff, coeff, coeff * 8, coeff * 2),  # Верхний горизонтальный

@@ -14,7 +14,6 @@ class QRCodeTests(TestCase):
             email='test@example.com',
             password='testpass123'
         )
-        
         # Создаем тестовый статический QR-код
         self.static_qr = StaticQRCode.objects.create(
             user=self.user,

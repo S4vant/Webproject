@@ -12,7 +12,7 @@ from .decorators import login_required
 import os
 import hashlib
 import urllib.parse
-from io import BytesIO
+
 
 def register(request):
     """
@@ -326,7 +326,9 @@ def qr_redirect(request, hashed_id, qr_id):
         print(f"Received hash: {hashed_id}")
         print(f"Expected hash: {expected_hash}")
         print(f"User ID: {qr.user.id}")
+        print(f"QR ID: {qr_id}")
         print(f"Salt: {salt}")
+        print(f"QR: {qr.target_url}")
         
         if hashed_id != expected_hash:
             raise Http404("Неверный QR-код")
@@ -344,7 +346,7 @@ def qr_redirect(request, hashed_id, qr_id):
         return redirect(qr.target_url)
         
     except Http404:
-        raise Http404("QR-код не найден")
+        raise Http404("QR-код не найден или неактивен")
 
 def examples_list(request):
     examples = QRCode.objects.filter(is_public=True).order_by('-created_at')
