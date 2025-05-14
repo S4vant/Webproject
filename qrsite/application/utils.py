@@ -58,7 +58,7 @@ def create_qr_code(data, size=10, format='png', background_image=None, fill_colo
     # Сохраняем в BytesIO
     output = BytesIO()
     if format == 'svg':
-        img.save(output, format='SVG')
+        img.save(output)
     else:
         img.save(output, format=format.upper())
     output.seek(0)
@@ -179,7 +179,7 @@ def create_beatiful_qr(data, background_image, size=10, format='png'):
         img = qr.get_matrix()
         # Создаем новое изображение
         coeff = size
-        coeff_small = round(coeff / 3)
+        coeff_small = round(coeff / 2.7)
         length_qr = len(img) * coeff
         
         background = bg
@@ -188,8 +188,8 @@ def create_beatiful_qr(data, background_image, size=10, format='png'):
         # Определение цветов
         black_1 = (0, 0, 0, 0)
         black_2 = (0, 0, 0, 230)
-        white_1 = (255, 255, 255, 50)
-        white_2 = (255, 255, 255, 230)
+        white_1 = (255, 255, 255, 70)
+        white_2 = (255, 255, 255, 240)
 
         idraw = ImageDraw.Draw(back_im, "RGBA")
 

@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.conf import settings
 import hashlib
 
-
+#Кастомная модель пользователя
 
 class CustomUser(AbstractUser):
     """
@@ -17,21 +17,7 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
 
-
-class CreatedQrCodes(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    short_name = models.CharField(max_length=100)
-    qr_code = models.ImageField(upload_to='qr_codes/')
-    link = models.URLField(max_length=200)
-    created_at = models.DateTimeField(auto_now_add=True)
-    scale = models.IntegerField(default=10)
-    is_static = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.short_name
-
-
-#3) Модель для хранения данных о QR кодах, которые были отсканированы. Хранит данные о QR коде и ссылку на кастомного пользователя, который его создал.
+#2) Модель для хранения данных о QR кодах, которые были отсканированы. Хранит данные о QR коде и ссылку на кастомного пользователя, который его создал.
 
 class QRCode(models.Model):
     FORMAT_CHOICES = [
@@ -41,10 +27,14 @@ class QRCode(models.Model):
         ('pdf', 'PDF'),
     ]
     
+    def qr_code_upload_path(instance, filename):
+        filename = filename.replace(' ', '_').replace('"', '')
+        return f'qr_codes/{instance.user.id}/{filename}'
+
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='qr_codes')
     title = models.CharField(max_length=255)
     content = models.TextField()
-    qr_code = models.ImageField(upload_to='qr_codes/')
+    qr_code = models.ImageField(upload_to=qr_code_upload_path)
     format = models.CharField(max_length=10, choices=FORMAT_CHOICES, default='png')
     size = models.IntegerField(default=10)
     is_public = models.BooleanField(default=False)
@@ -53,6 +43,10 @@ class QRCode(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_dynamic = models.BooleanField(default=False)
     background_image = models.ImageField(upload_to='qr_codes/backgrounds/', blank=True, null=True)
+    
+    
+
+
     def __str__(self):
         return self.title
     
