@@ -12,7 +12,7 @@
                     <h3 class="mb-0">Создание статического QR-кода</h3>
                 </div>
                 <div class="card-body">
-                    <form method="post" enctype="multipart/form-data" id="qrForm">
+                    <form id="qrForm" enctype="multipart/form-data">
                         {% csrf_token %}
                         <input type="hidden" name="qr_type" value="static">
                         
@@ -24,9 +24,7 @@
                                     <small class="form-text text-muted">{{ field.help_text }}</small>
                                 {% endif %}
                                 {% if field.errors %}
-                                    <div class="alert alert-danger">
-                                        {{ field.errors }}
-                                    </div>
+                                    <div class="alert alert-danger">{{ field.errors }}</div>
                                 {% endif %}
                             </div>
                         {% endfor %}
@@ -60,6 +58,7 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script>
@@ -70,8 +69,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const beautifulBtn = document.getElementById('beautifulBtn');
     const previewContainer = document.getElementById('previewContainer');
     const backgroundImageInput = document.getElementById('background_image');
-    
-    // Функция для проверки наличия фонового изображения
+
+    // Блокируем нативную отправку формы (например, по Enter)
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+    });
+
+    // Защита от двойного нажатия
+    let isSaving = false;
+
     function checkBackgroundImage() {
         if (!backgroundImageInput.files.length) {
             alert('Пожалуйста, загрузите фоновое изображение');
@@ -79,15 +85,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return true;
     }
-    
+
     previewBtn.addEventListener('click', function() {
         const formData = new FormData(form);
         formData.append('qr_type', 'static');
         formData.append('is_dynamic', '0');
-        
-        // Показываем индикатор загрузки
+
         previewContainer.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Загрузка...</span></div>';
-        
+
         fetch('{% url "preview_qr" %}', {
             method: 'POST',
             body: formData,
@@ -96,29 +101,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error('Ошибка при генерации QR-кода');
-            }
+            if (!response.ok) throw new Error('Ошибка при генерации QR-кода');
             return response.blob();
         })
         .then(blob => {
             const imageUrl = URL.createObjectURL(blob);
-            previewContainer.innerHTML = `<img src="${imageUrl}" class="img-fluid" alt="QR Code Preview" style="max-width: 300px;">`;
+            previewContainer.innerHTML = `<img src="${imageUrl}" class="img-fluid" alt="QR Preview" style="max-width: 300px;">`;
         })
         .catch(error => {
             console.error('Error:', error);
             previewContainer.innerHTML = '<div class="alert alert-danger">Ошибка при генерации предпросмотра</div>';
         });
     });
-    
+
     beautifulBtn.addEventListener('click', function() {
         if (!checkBackgroundImage()) return;
-        
+
         const formData = new FormData(form);
         formData.append('qr_type', 'static');
         formData.append('is_dynamic', '0');
+
         previewContainer.innerHTML = '<div class="spinner-border text-warning" role="status"><span class="visually-hidden">Загрузка...</span></div>';
-        
+
         fetch('{% url "beautiful_qr_preview" %}', {
             method: 'POST',
             body: formData,
@@ -127,9 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error('Ошибка при генерации красивого QR-кода');
-            }
+            if (!response.ok) throw new Error('Ошибка при генерации красивого QR-кода');
             return response.blob();
         })
         .then(blob => {
@@ -141,15 +143,19 @@ document.addEventListener('DOMContentLoaded', function() {
             previewContainer.innerHTML = '<div class="alert alert-danger">Ошибка при генерации красивого QR-кода</div>';
         });
     });
-    
-    saveBtn.addEventListener('click', function() {
+
+    saveBtn.addEventListener('click', function(event) {
+        event.preventDefault();
+
+        if (isSaving) return;
+        isSaving = true;
+
         const formData = new FormData(form);
         formData.append('qr_type', 'static');
         formData.append('is_dynamic', '0');
-        
-        // Показываем индикатор загрузки
-        previewContainer.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Сохранение...</span></div>';
-        
+
+        previewContainer.innerHTML = '<div class="spinner-border text-success" role="status"><span class="visually-hidden">Сохранение...</span></div>';
+
         fetch('{% url "save_qr" %}', {
             method: 'POST',
             body: formData,
@@ -158,6 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
+            isSaving = false;
             if (response.redirected) {
                 window.location.href = response.url;
             } else {
@@ -165,6 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
+            isSaving = false;
             console.error('Error:', error);
             previewContainer.innerHTML = '<div class="alert alert-danger">Ошибка при сохранении QR-кода</div>';
         });
@@ -172,4 +180,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-{% endblock %} 

@@ -4,6 +4,8 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+PROJECT_ROOT = BASE_DIR.parent  
+
 def load_env(env_path = '.env'):
     with open(env_path) as f:
         for line in f:
@@ -18,12 +20,16 @@ load_env()
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
-
+SECRET_KEY = os.getenv('SECRET_KEY')
+SITE_URL = os.getenv("SITE_URL")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = []
+print("DEBUG = ", os.getenv("DEBUG"))
+print("SITE_URL =", SITE_URL)
+
+DEBUG = os.getenv("DEBUG")
+
+ALLOWED_HOSTS = ["109.124.201.209","127.0.0.1"]
 
 AUTH_USER_MODEL = 'application.CustomUser'
 # Application definition
@@ -95,22 +101,20 @@ USE_TZ = True
 
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
-SITE_URL = 'http://127.0.0.1:8000'
+
 
 # Настройки для смены пароля
 PASSWORD_CHANGE_REDIRECT_URL = 'password_change_done'
 PASSWORD_RESET_REDIRECT_URL = 'password_reset_done'
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'application/static'),
-]
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MEDIA_URL = '/amedia/'
+MEDIA_ROOT = BASE_DIR / 'amedia' 
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

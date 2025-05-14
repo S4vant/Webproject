@@ -57,7 +57,9 @@ def index(request):
     return render(request, 'home.html')
 
 def showcase(request):
-    return render(request, 'showcase.html')
+    # Получаем последние 8 публичных QR кодов
+    latest_qr_codes = QRCode.objects.filter(is_public=True).order_by('-created_at')[:8]
+    return render(request, 'showcase.html', {'latest_qr_codes': latest_qr_codes})
 
 @login_required
 def profile(request):
@@ -82,33 +84,7 @@ def create_static_qr(request):
     """
     Создание статического QR-кода
     """
-    if request.method == 'POST':
-        form = StaticQRForm(request.POST, request.FILES)
-        if form.is_valid():
-            qr = form.save(commit=False)
-            qr.user = request.user
-            
-            # Получаем размер и формат из формы
-            size = form.cleaned_data['size']
-            format = form.cleaned_data['format']
-            
-            # Генерация QR-кода
-            qr_code = create_qr_code(
-                data=qr.content,
-                size=size,
-                format=format,
-                background_image=request.FILES.get('background_image')
-            )
-            
-            # Сохранение QR-кода
-            filepath = save_qr_code(qr_code, request.user, qr.title, 'static', format)
-            qr.qr_code = filepath
-            qr.save()
-            
-            messages.success(request, 'QR-код успешно создан!')
-            return redirect('qr_detail', qr_id=qr.id)
-    else:
-        form = StaticQRForm()
+    form = StaticQRForm()
     
     return render(request, 'create_static_qr.html', {'form': form})
 
@@ -117,44 +93,8 @@ def create_dynamic_qr(request):
     """
     Создание динамического QR-кода
     """
-    if request.method == 'POST':
-        form = DynamicQRForm(request.POST, request.FILES)
-        if form.is_valid():
-            qr = form.save(commit=False)
-            qr.user = request.user
-            qr.is_dynamic = True
-            
-            # Сначала сохраняем QR-код, чтобы получить id
-            qr.save()
-            
-            # Получаем размер и формат из формы
-            size = form.cleaned_data['size']
-            format = form.cleaned_data['format']
-            
-            # Генерируем QR-код с URL переадресации
-            redirect_url = qr.get_redirect_url()
-            print(f"Generated redirect URL: {redirect_url}")
-            print(f"User ID: {qr.user.id}")
-            print(f"Hashed ID: {qr.get_hashed_user_id()}")
-            print(f"Target URL: {qr.target_url}")
-            print(f"QR ID: {qr.id}")
-            
-            qr_code = create_qr_code(
-                data=redirect_url,
-                size=size,
-                format=format,
-                background_image=request.FILES.get('background_image')
-            )
-            
-            # Сохранение QR-кода
-            filepath = save_qr_code(qr_code, request.user, qr.title, 'dynamic', format)
-            qr.qr_code = filepath
-            qr.save()
-            
-            messages.success(request, 'QR-код успешно создан!')
-            return redirect('qr_detail', qr_id=qr.id)
-    else:
-        form = DynamicQRForm()
+    
+    form = DynamicQRForm()
     
     return render(request, 'create_dynamic_qr.html', {'form': form})
 
@@ -218,7 +158,8 @@ def download_qr(request, qr_id):
             'png': 'application/octet-stream',
             'jpg': 'application/octet-stream',
             'jpeg': 'application/octet-stream',
-            'svg': 'application/octet-stream'
+            'svg': 'application/octet-stream',
+            'pdf': 'application/octet-stream'
         }
         content_type = mime_types.get(qr.format.lower(), 'application/octet-stream')
         
@@ -323,13 +264,7 @@ def qr_redirect(request, hashed_id, qr_id):
         user_id_str = f"{qr.user.id}{salt}"
         expected_hash = hashlib.sha256(user_id_str.encode()).hexdigest()[:16]
         
-        print(f"Received hash: {hashed_id}")
-        print(f"Expected hash: {expected_hash}")
-        print(f"User ID: {qr.user.id}")
-        print(f"QR ID: {qr_id}")
-        print(f"Salt: {salt}")
-        print(f"QR: {qr.target_url}")
-        
+
         if hashed_id != expected_hash:
             raise Http404("Неверный QR-код")
         
@@ -455,7 +390,7 @@ def preview_qr(request):
         # Получаем данные формы
         title = form_data.get('title', '')
         size = int(form_data.get('size', 10))
-        format = form_data.get('format', 'png')
+        format = 'png'
         
         # Создаем временный QR-код
         if qr_type == 'dynamic':
@@ -501,7 +436,7 @@ def beautiful_qr_preview(request):
         # Получаем данные формы
         title = form_data.get('title', '')
         size = int(form_data.get('size', 10))
-        format = form_data.get('format', 'png')
+        format = 'png'
         
         # Создаем временный QR-код
         if qr_type == 'dynamic':
