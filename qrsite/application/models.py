@@ -11,7 +11,7 @@ class CustomUser(AbstractUser):
     """
     Кастомная модель пользователя
     """
-    email = models.EmailField(unique=True)
+    email = models.EmailField(null=True, blank=True)
     date_joined = models.DateTimeField(default=timezone.now)
     
     def __str__(self):

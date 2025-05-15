@@ -7,11 +7,11 @@ from .models import CustomUser, StaticQRCode, DynamicQRCode, QRCode
 User = get_user_model()
 
 class CustomUserCreationForm(UserCreationForm):
-    email = forms.EmailField(required=True)
+    email = forms.EmailField(required=False)
     
     class Meta:
         model = User
-        fields = ('username', 'email', 'password1', 'password2')
+        fields = ('username',  'password1', 'password2')
     
     def save(self, commit=True):
         user = super().save(commit=False)

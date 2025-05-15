@@ -4,8 +4,6 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-PROJECT_ROOT = BASE_DIR.parent  
-
 def load_env(env_path = '.env'):
     with open(env_path) as f:
         for line in f:
@@ -29,13 +27,13 @@ print("SITE_URL =", SITE_URL)
 
 DEBUG = os.getenv("DEBUG")
 
-ALLOWED_HOSTS = ["109.124.201.209","127.0.0.1"]
+ALLOWED_HOSTS = ["109.124.201.209","127.0.0.1","localhost"]
 
 AUTH_USER_MODEL = 'application.CustomUser'
 # Application definition
 
 INSTALLED_APPS = [
-    'application.apps.ApplicationConfig',
+    'application',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -63,6 +61,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.static',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -88,6 +87,8 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
+
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/

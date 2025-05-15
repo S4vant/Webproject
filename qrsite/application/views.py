@@ -12,7 +12,10 @@ from .decorators import login_required
 import os
 import hashlib
 import urllib.parse
+import logging
 
+# Создаём логгер
+logger = logging.getLogger(__name__)
 
 def register(request):
     """
@@ -26,7 +29,10 @@ def register(request):
             messages.success(request, 'Регистрация успешна!')
             return redirect('home')
     else:
+        
         form = CustomUserCreationForm()
+        for err in form.errors:
+            raise JsonResponse({'error': form.errors[err][0]}, status=400)
     
     return render(request, 'registration/register.html', {'form': form})
 
@@ -189,6 +195,7 @@ def download_qr(request, qr_id):
 def qr_delete(request, qr_id):
     try:
         qr = DynamicQRCode.objects.get(id=qr_id)
+       
     except DynamicQRCode.DoesNotExist:
         # Если не найден, пробуем получить статический
         try:
@@ -196,9 +203,13 @@ def qr_delete(request, qr_id):
         except QRCode.DoesNotExist:
             raise Http404("QR-код не найден")
     if request.method == 'POST':
+        if request.user != qr.user or not request.user.is_staff:
+            messages.error(request, 'Вы не имеете отношения к этому QR-коду')
+            return redirect('qr_detail', qr_id=qr_id)
         qr.delete()
         messages.success(request, 'QR-код успешно удален')
         return redirect('profile')
+    
     return render(request, 'qr_confirm_delete.html', {'qr': qr})
 
 @login_required
@@ -322,28 +333,6 @@ def password_change_done(request):
     messages.success(request, 'Ваш пароль был успешно изменен!')
     return redirect('profile')
 
-@login_required
-def edit_dynamic_qr(request, qr_id):
-    """
-    Редактирование динамического QR-кода
-    """
-    qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
-    
-    if request.method == 'POST':
-        form = EditDynamicQRForm(request.POST, instance=qr)
-        if form.is_valid():
-            qr = form.save()
-            messages.success(request, 'QR-код успешно обновлен!')
-            return redirect('qr_detail', qr_id=qr.id)
-    else:
-        form = EditDynamicQRForm(instance=qr)
-    
-    context = {
-        'form': form,
-        'qr': qr,
-        'current_url': qr.get_redirect_url(),
-    }
-    return render(request, 'edit_dynamic_qr.html', context)
 
 def auth_required(request):
     """
@@ -362,7 +351,7 @@ def edit_static_qr(request, qr_id):
     try:
         qr = StaticQRCode.objects.get(id=qr_id, user=request.user)
     except StaticQRCode.DoesNotExist:
-        raise Http404("QR-код не найден")
+        raise JsonResponse({'error': 'Вы не владелец этого QR-кода вы не можете его редактировать'}, status=400)
 
     if request.method == 'POST':
         form = StaticQRCodeForm(request.POST, request.FILES, instance=qr)
@@ -475,6 +464,8 @@ def beautiful_qr_preview(request):
 
 @login_required
 def save_qr(request):
+    
+    
     """
     Сохранение QR-кода в базу данных
     """
@@ -560,4 +551,8 @@ def save_qr(request):
     
     return JsonResponse({'error': 'Неверный метод запроса'}, status=400)
 
-# 
+def universal_error_page(request, exception=None):
+    # Логируем ошибку
+    logger.error("Ошибка при обработке запроса", exc_info=exception)
+
+    return render(request, 'errors/universal_error.html', status=500)

@@ -23,7 +23,7 @@
                         {% endif %}
                     </div>
 
-                    <div class="mb-3">
+                    {% comment %} <div class="mb-3">
                         <label for="id_email" class="form-label">Email</label>
                         <input type="email" name="email" id="id_email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" required>
                         {% if form.email.errors %}
@@ -31,7 +31,7 @@
                                 {{ form.email.errors.0 }}
                             </div>
                         {% endif %}
-                    </div>
+                    </div> {% endcomment %}
 
                     <div class="mb-3">
                         <label for="id_password1" class="form-label">Пароль</label>
