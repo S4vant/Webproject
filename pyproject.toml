@@ -10,4 +10,5 @@ dependencies = [
     "pillow>=11.2.1",
     "pyzbar>=0.1.9",
     "qrcode>=8.1",
+    "whitenoise>=6.9.0",
 ]

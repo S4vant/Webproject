@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.utils import timezone
 from django.conf import settings
-from .forms import CustomUserCreationForm, StaticQRForm, DynamicQRForm, ProfileForm, CustomPasswordChangeForm, EditDynamicQRForm, StaticQRCodeForm
+from .forms import CustomUserCreationForm, StaticQRForm, DynamicQRForm, ProfileForm, CustomPasswordChangeForm, EditDynamicQRForm, EditStaticQRForm
 from .models import QRCode, StaticQRCode, DynamicQRCode
 from .utils import save_qr_code, create_qr_code, create_beatiful_qr
 from .decorators import login_required
@@ -89,9 +89,10 @@ def edit_profile(request):
 def create_static_qr(request):
     """
     Создание статического QR-кода
-    """
+    """    
+ 
     form = StaticQRForm()
-    
+
     return render(request, 'create_static_qr.html', {'form': form})
 
 @login_required
@@ -203,7 +204,7 @@ def qr_delete(request, qr_id):
         except QRCode.DoesNotExist:
             raise Http404("QR-код не найден")
     if request.method == 'POST':
-        if request.user != qr.user or not request.user.is_staff:
+        if request.user != qr.user and not request.user.is_staff:
             messages.error(request, 'Вы не имеете отношения к этому QR-коду')
             return redirect('qr_detail', qr_id=qr_id)
         qr.delete()
@@ -214,50 +215,55 @@ def qr_delete(request, qr_id):
 
 @login_required
 def qr_edit(request, qr_id):
-    qr = get_object_or_404(QRCode, id=qr_id)
+    try:
+        qr = DynamicQRCode.objects.get(id=qr_id)
+    except DynamicQRCode.DoesNotExist:
+        # Если не найден, пробуем получить статический
+        try:
+            qr = QRCode.objects.get(id=qr_id)
+        except QRCode.DoesNotExist:
+            raise Http404("QR-код не найден")
     
     # Проверяем, имеет ли пользователь доступ к редактированию
     if qr.user != request.user:
         messages.error(request, 'У вас нет прав для редактирования этого QR-кода')
-        return redirect('qr_detail', qr_id=qr_id)
+        return redirect('home')
+    is_dynamic = 1 if qr.is_dynamic else 0
     
     if request.method == 'POST':
-        if isinstance(qr, DynamicQRCode):
-            form = DynamicQRForm(request.POST, request.FILES, instance=qr)
-            qr_type = 'dynamic'
+        if is_dynamic:
+            form = EditDynamicQRForm(request.POST, instance=qr)
+            qr_data = qr.target_url
+            redirect_count = qr.redirect_count
+            
         else:
-            form = StaticQRForm(request.POST, request.FILES, instance=qr)
-            qr_type = 'static'
-            
+            form = EditStaticQRForm(request.POST or none, instance=qr)
+            qr_data = qr.content
+            form.fields['content'].disabled = True
+            form.fields['content'].initial = qr.content
+
         if form.is_valid():
-            qr = form.save(commit=False)
-            qr.updated_at = timezone.now()
-            format = form.cleaned_data['format']
-            # Генерируем новый QR-код с обновленными параметрами
-            qr_data = qr.target_url if isinstance(qr, DynamicQRCode) else qr.content
-            qr_code = create_qr_code(
-                qr_data,
-                size=form.cleaned_data['size'],
-                format=form.cleaned_data['format'],
-                background_image=form.cleaned_data.get('background_image'),
-            )
-            
-            # Сохраняем QR-код
-            qr.image = save_qr_code(qr_code, request.user, qr.title, qr_type, qr.format)
-            qr.save()
+            qr = form.save()
             
             messages.success(request, 'QR-код успешно обновлен')
             return redirect('qr_detail', qr_id=qr_id)
-    else:
-        if isinstance(qr, DynamicQRCode):
-            form = DynamicQRForm(instance=qr)
         else:
-            form = StaticQRForm(instance=qr)
+            messages.error(request, 'Форма содержит ошибки. Проверьте введённые данные.')
+            print("Ошибки формы:", form.errors)
+    else:
+        if is_dynamic:
+            form = EditDynamicQRForm(instance=qr)
+            qr_data = qr.target_url
+            redirect_count = qr.redirect_count
+        else:
+            form = EditStaticQRForm(instance=qr)
+            qr_data = qr.content
     
     context = {
         'form': form,
         'qr': qr,
-        'is_dynamic': isinstance(qr, DynamicQRCode),
+        'qr_data':qr_data,
+        'is_dynamic': is_dynamic,
         'image': qr.qr_code.url if qr.qr_code else None,
     }
     return render(request, 'qr_edit.html', context)
@@ -345,27 +351,7 @@ def auth_required(request):
         'title': 'Требуется авторизация'
     })
 
-@login_required
-def edit_static_qr(request, qr_id):
-    """Редактирование статического QR-кода"""
-    try:
-        qr = StaticQRCode.objects.get(id=qr_id, user=request.user)
-    except StaticQRCode.DoesNotExist:
-        raise JsonResponse({'error': 'Вы не владелец этого QR-кода вы не можете его редактировать'}, status=400)
 
-    if request.method == 'POST':
-        form = StaticQRCodeForm(request.POST, request.FILES, instance=qr)
-        if form.is_valid():
-            qr = form.save()
-            messages.success(request, 'QR-код успешно обновлен')
-            return redirect('qr_detail', qr_id=qr.id)
-    else:
-        form = StaticQRCodeForm(instance=qr)
-
-    return render(request, 'edit_static_qr.html', {
-        'form': form,
-        'qr': qr
-    })
 
 @login_required
 def preview_qr(request):
@@ -553,6 +539,6 @@ def save_qr(request):
 
 def universal_error_page(request, exception=None):
     # Логируем ошибку
-    logger.error("Ошибка при обработке запроса", exc_info=exception)
+    # logger.error("Ошибка при обработке запроса", exc_info=exception)
 
     return render(request, 'errors/universal_error.html', status=500)

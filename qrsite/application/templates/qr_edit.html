@@ -24,38 +24,25 @@
                         {% csrf_token %}
                         
                         <div class="mb-3">
-                            <label for="{{ form.title.id_for_label }}" class="form-label">Название</label>
+                            <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
                             {{ form.title }}
-                            {% if form.title.errors %}
-                                <div class="alert alert-danger">
-                                    {{ form.title.errors }}
-                                </div>
-                            {% endif %}
                         </div>
-                        
-                        {% if is_dynamic %}
-                            <div class="mb-3">
-                                <label for="{{ form.target_url.id_for_label }}" class="form-label">Целевой URL</label>
-                                {{ form.target_url }}
-                                {% if form.target_url.errors %}
-                                    <div class="alert alert-danger">
-                                        {{ form.target_url.errors }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% else %}
-                            <div class="mb-3">
-                                <label for="{{ form.content.id_for_label }}" class="form-label">Содержимое</label>
-                                {{ form.content }}
-                                {% if form.content.errors %}
-                                    <div class="alert alert-danger">
-                                        {{ form.content.errors }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                        
+                        {% if qr.is_dynamic %}
                         <div class="mb-3">
+                            <label for="{{ form.target_url.id_for_label }}" class="form-label">{{ form.target_url.label }}</label>
+                            {{ form.target_url }}
+                            <div class="form-text">Новая целевая ссылка, на которую будет перенаправлен пользователь</div>
+                        </div>
+                            {% else %}
+                            <label for="{{ form.target_url.id_for_label }}" class="form-label">{{ form.target_url.label }}</label>
+                            {{ qr_data }}
+                            <div class="form-text">Пока что не реализована возможность автоматически пересоздавать qr. Это статическая информация в коде</div>
+                            {% endif %}
+                        
+                        
+
+                        
+                        <!-- <div class="mb-3">
                             <label for="{{ form.size.id_for_label }}" class="form-label">Размер QR-кода</label>
                             {{ form.size }}
                             <div class="form-text">{{ form.size.help_text }}</div>
@@ -95,7 +82,7 @@
                                     {{ form.logo.errors }}
                                 </div>
                             {% endif %}
-                        </div>
+                        </div> -->
                         
                         <div class="mb-3 form-check">
                             {{ form.is_public }}
@@ -122,6 +109,46 @@
                     <div class="mb-3">
                         <img src="{{ qr.qr_code.url }}" alt="Текущий QR-код" class="img-fluid" style="max-width: 300px;">
                     </div>
+                    <h5>Информация о QR-коде</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    <strong>Тип:</strong> 
+                                    {% if qr.is_dynamic %}
+                                    Динамический
+                                    {% else %}
+                                    Статический
+                                    {% endif %}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Формат:</strong> {{ qr.format }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Создан:</strong> {{ qr.created_at|date:"d.m.Y H:i" }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Просмотров:</strong> {{ qr.views }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Публичный:</strong> {{ qr.is_public }}
+                                </li>
+                                {% if qr.is_dynamic %}
+                                <li class="list-group-item">
+                                    <strong>Переадресаций:</strong> {{ qr.redirect_count }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Целевая ссылка:</strong>
+                                    <div class="mt-2">
+                                        <code>{{ qr_data }}</code>
+                                    </div>
+                                </li>
+                                {% else %}
+                                <li class="list-group-item">
+                                    <strong>Содержимое:</strong>
+                                    <div class="mt-2">
+                                        <code>{{ qr_data }}</code>
+                                    </div>
+                                </li>
+                                {% endif %}
                     <p class="text-muted">Предпросмотр будет обновлен после сохранения изменений</p>
                 </div>
             </div>

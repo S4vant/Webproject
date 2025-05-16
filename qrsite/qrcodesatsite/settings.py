@@ -22,12 +22,15 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 SITE_URL = os.getenv("SITE_URL")
 # SECURITY WARNING: don't run with debug turned on in production!
 
-print("DEBUG = ", os.getenv("DEBUG"))
-print("SITE_URL =", SITE_URL)
+
 
 DEBUG = os.getenv("DEBUG")
 
-ALLOWED_HOSTS = ["109.124.201.209","127.0.0.1","localhost"]
+if DEBUG:
+    print("DEBUG = ", os.getenv("DEBUG"))
+    print("SITE_URL =", SITE_URL)
+
+ALLOWED_HOSTS = ["109.124.207.59","localhost","127.0.0.1"]
 
 AUTH_USER_MODEL = 'application.CustomUser'
 # Application definition
@@ -50,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'qrcodesatsite.urls'
@@ -66,6 +70,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                
             ],
         },
     },
@@ -84,8 +89,8 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
+    # {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
+    # {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
 
 
@@ -111,8 +116,10 @@ PASSWORD_RESET_REDIRECT_URL = 'password_reset_done'
 # Static files (CSS, JavaScript, Images)
 
 
-MEDIA_URL = '/amedia/'
-MEDIA_ROOT = BASE_DIR / 'amedia' 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'amedia'  
+
+
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'

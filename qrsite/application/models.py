@@ -43,12 +43,25 @@ class QRCode(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_dynamic = models.BooleanField(default=False)
     background_image = models.ImageField(upload_to='qr_codes/backgrounds/', blank=True, null=True)
-    
+    hash_id = models.CharField(max_length=12, unique=True, blank=True, null=True)
     
 
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)  # сначала сохраняем, чтобы появился self.id
+        if not self.hash_id:
+            self.hash_id = hashlib.sha1(f'{self.id}'.encode()).hexdigest()[:10]
+            super().save(update_fields=['hash_id'])  # сохраняем хеш отдельно    
+    
+    def get_hashed_qr_id(self):
+        """Получает хешированный ID пользователя"""
+        # Используем соль для дополнительной безопасности
+        salt = settings.SECRET_KEY[:3]
+        qr_id_str = f"{self.QRCode.id}{salt}"
+        return hashlib.sha256(qr_id_str.encode()).hexdigest()[:16]
     
     class Meta:
         ordering = ['-created_at']

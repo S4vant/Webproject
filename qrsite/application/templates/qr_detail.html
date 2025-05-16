@@ -13,7 +13,7 @@
                     {% if user == qr.user %}
                     <div class="btn-group">
                         {% if qr.is_dynamic %}
-                        <a href="{% url 'edit_dynamic_qr' qr.id %}" class="btn btn-light btn-sm">
+                        <a href="{% url 'qr_edit' qr.id %}" class="btn btn-light btn-sm">
                             <i class="bi bi-pencil me-2"></i>Редактировать
                         </a>
                         
@@ -22,7 +22,7 @@
                         </a>
                         
                         {% else %}
-                        <a href="{% url 'edit_static_qr' qr.id %}" class="btn btn-light btn-sm">
+                        <a href="{% url 'qr_edit' qr.id %}" class="btn btn-light btn-sm">
                             <i class="bi bi-pencil me-2"></i>Редактировать
                         </a>
 

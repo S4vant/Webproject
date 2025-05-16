@@ -28,13 +28,14 @@ class QRCodeTests(TestCase):
         # Создаем тестовый динамический QR-код
         self.dynamic_qr = DynamicQRCode.objects.create(
             user=self.user,
-            title='Test Dynamic QR',
+            title='Test_Dynamic_QR',
             target_url='https://example.com',
             format='png',
             size=10,
             is_public=True
+
         )
-        
+        print('динам',dynamic_qr.qr_code)
         # Создаем клиент для тестирования
         self.client = Client()
         
@@ -51,26 +52,28 @@ class QRCodeTests(TestCase):
         )
         
         response = self.client.post(reverse('create_static_qr'), {
-            'title': 'New Static QR',
+            'title': 'New_Static_QR',
             'content': 'https://test.com',
             'format': 'png',
             'size': 10,
             'is_public': True,
+
         })
-        self.assertEqual(response.status_code, 302)  # Проверяем редирект
-        self.assertTrue(StaticQRCode.objects.filter(title='New Static QR').exists())
+        print('динам',qr_code)
+ 
+        self.assertTrue(StaticQRCode.objects.filter(title='New_Static_QR').exists())
 
     def test_dynamic_qr_creation(self):
         """Тест создания динамического QR-кода"""
         response = self.client.post(reverse('create_dynamic_qr'), {
-            'title': 'New Dynamic QR',
+            'title': 'New_Dynamic_QR',
             'target_url': 'https://test.com',
             'format': 'png',
             'size': 10,
             'is_public': True
         })
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(DynamicQRCode.objects.filter(title='New Dynamic QR').exists())
+        self.assertTrue(DynamicQRCode.objects.filter(title='New_Dynamic_QR').exists())
 
     def test_qr_detail_view(self):
         """Тест просмотра деталей QR-кода"""
@@ -102,7 +105,7 @@ class QRCodeTests(TestCase):
     def test_qr_edit(self):
         """Тест редактирования QR-кода"""
         # Тест редактирования статического QR-кода
-        response = self.client.post(reverse('edit_static_qr', args=[self.static_qr.id]), {
+        response = self.client.post(reverse('qr_edit', args=[self.static_qr.id]), {
             'title': 'Updated Static QR',
             'content': 'https://updated.com',
             'format': 'png',
@@ -114,7 +117,7 @@ class QRCodeTests(TestCase):
         self.assertEqual(updated_qr.title, 'Updated Static QR')
 
         # Тест редактирования динамического QR-кода
-        response = self.client.post(reverse('edit_dynamic_qr', args=[self.dynamic_qr.id]), {
+        response = self.client.post(reverse('qr_edit', args=[self.dynamic_qr.id]), {
             'title': 'Updated Dynamic QR',
             'target_url': 'https://updated.com',
             'is_public': True

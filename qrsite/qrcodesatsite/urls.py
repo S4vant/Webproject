@@ -18,7 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.static import serve
 from django.contrib.auth import views as auth_views
+from django.core.wsgi import get_wsgi_application
+from django.urls import re_path
+
 import os
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -40,5 +44,6 @@ handler404 = 'application.views.universal_error_page'
 handler500 = 'application.views.universal_error_page'
 
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]
