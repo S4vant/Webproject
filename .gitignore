@@ -7,15 +7,9 @@ wheels/
 *.egg-info
 
 #dbase
-*.sqlite3
 *.db
 *.db-journal
 *.db-shm
-
-#images
-*.png
-*.jpg
-*.svg
 
 
 # Pycache
