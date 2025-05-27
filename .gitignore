@@ -11,6 +11,8 @@ wheels/
 *.db-journal
 *.db-shm
 
+amediapast/
+amediaPast/
 
 # Pycache
 __pycache__/
