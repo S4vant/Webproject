@@ -273,32 +273,47 @@ def qr_redirect(request, hashed_id, qr_id):
     Обработка переадресации с QR-кода
     """
     try:
+        print(f"Request path: {request.path}")
+        print(f"Request method: {request.method}")
+        print(f"Request scheme: {request.scheme}")
+        print(f"Request host: {request.get_host()}")
+        
         # Получаем QR-код
         qr = get_object_or_404(DynamicQRCode, id=qr_id)
         
         # Проверяем хеш ID пользователя
-        salt = settings.SECRET_KEY[:8]
-        user_id_str = f"{qr.user.id}{salt}"
-        expected_hash = hashlib.sha256(user_id_str.encode()).hexdigest()[:16]
-        
+        expected_hash = qr.get_hashed_user_id()
+        print('received_hash =', hashed_id)
+        print('expected_hash =', expected_hash)
+        print('user_id =', qr.user.id)
+        print('salt =', settings.SECRET_KEY[:8])
+        print('is_public =', qr.is_public)
+        print('target_url =', qr.target_url)
+        print('SITE_URL =', settings.SITE_URL)
 
         if hashed_id != expected_hash:
+            print('Hash mismatch!')
             raise Http404("Неверный QR-код")
-        
-        # Проверяем активность QR-кода
+            
         if not qr.is_public:
-            raise Http404("QR-код неактивен")
-        
+            print('QR code is not public!')
+            raise Http404("QR-код не публичный")
+
         # Увеличиваем счетчики
         qr.views += 1
         qr.redirect_count += 1
         qr.save()
         
         # Выполняем переадресацию
+        print(f"Redirecting to: {qr.target_url}")
         return redirect(qr.target_url)
         
-    except Http404:
+    except Http404 as e:
+        print('404 error:', str(e))
         raise Http404("QR-код не найден или неактивен")
+    except Exception as e:
+        print('Unexpected error:', str(e))
+        raise
 
 def examples_list(request):
     examples = QRCode.objects.filter(is_public=True).order_by('-created_at')
@@ -490,6 +505,10 @@ def save_qr(request):
                 # Генерируем URL переадресации
                 content = qr.get_redirect_url()
                 print(f"Generated redirect URL: {content}")  # Для отладки
+                print(f"User ID: {qr.user.id}")
+                print(f"Salt: {settings.SECRET_KEY[:8]}")
+                print(f"Expected hash: {qr.get_hashed_user_id()}")
+                print(f"QR ID: {qr.id}")
             else:
                 content = form_data.get('content', '')
                 if not content:

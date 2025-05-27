@@ -24,6 +24,7 @@ from django.core.wsgi import get_wsgi_application
 from django.urls import re_path
 
 import os
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('application.urls')),
@@ -43,7 +44,3 @@ handler403 = 'application.views.universal_error_page'
 handler404 = 'application.views.universal_error_page'
 handler500 = 'application.views.universal_error_page'
 
-
-urlpatterns += [
-    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-]

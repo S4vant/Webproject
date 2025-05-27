@@ -8,10 +8,10 @@ def load_env(env_path = '.env'):
     with open(env_path) as f:
         for line in f:
             if line.strip() and not line.startswith('#'):
-                
                 key, value = line.strip().split('=',1)
                 os.environ[key] = value
-    
+                if key == 'SITE_URL':
+                    print(f"Loaded SITE_URL from .env: {value}")
 
 load_env()
 # Quick-start development settings - unsuitable for production
@@ -20,6 +20,7 @@ load_env()
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 SITE_URL = os.getenv("SITE_URL")
+print(f"Final SITE_URL value: {SITE_URL}")
 # SECURITY WARNING: don't run with debug turned on in production!
 
 
@@ -30,7 +31,7 @@ if DEBUG:
     print("DEBUG = ", os.getenv("DEBUG"))
     print("SITE_URL =", SITE_URL)
 
-ALLOWED_HOSTS = ["109.124.207.59","localhost","127.0.0.1"]
+ALLOWED_HOSTS = [ "localhost", "127.0.0.1", "0.0.0.0", "109.124.223.142"]
 
 AUTH_USER_MODEL = 'application.CustomUser'
 # Application definition
@@ -61,7 +62,7 @@ ROOT_URLCONF = 'qrcodesatsite.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'qrsite/application/templates'],
+        'DIRS': [BASE_DIR / 'application/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -122,8 +123,7 @@ MEDIA_ROOT = BASE_DIR / 'amedia'
 
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

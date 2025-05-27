@@ -57,10 +57,10 @@ class QRCode(models.Model):
             super().save(update_fields=['hash_id'])  # сохраняем хеш отдельно    
     
     def get_hashed_qr_id(self):
-        """Получает хешированный ID пользователя"""
+        """Получает хешированный ID QR-кода"""
         # Используем соль для дополнительной безопасности
-        salt = settings.SECRET_KEY[:3]
-        qr_id_str = f"{self.QRCode.id}{salt}"
+        salt = settings.SECRET_KEY[:8]  # Используем ту же длину соли, что и в DynamicQRCode
+        qr_id_str = f"{self.id}{salt}"
         return hashlib.sha256(qr_id_str.encode()).hexdigest()[:16]
     
     class Meta:
@@ -87,7 +87,12 @@ class DynamicQRCode(QRCode):
     def get_redirect_url(self):
         """Получает полный URL для переадресации"""
         hashed_id = self.get_hashed_user_id()
-        return f"{settings.SITE_URL}/redirect/{hashed_id}/{self.id}"
+        url = f"{settings.SITE_URL}/redirect/{hashed_id}/{self.id}"
+        print(f"Generated URL in model: {url}")
+        print(f"SITE_URL: {settings.SITE_URL}")
+        print(f"hashed_id: {hashed_id}")
+        print(f"qr_id: {self.id}")
+        return url
     
     def __str__(self):
         return f"{self.title} (Динамический)"
