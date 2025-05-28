@@ -23,15 +23,15 @@ SITE_URL = os.getenv("SITE_URL")
 print(f"Final SITE_URL value: {SITE_URL}")
 # SECURITY WARNING: don't run with debug turned on in production!
 
-
+IP_ADDRESS = os.getenv("IP_ADDRESS")
 
 DEBUG = os.getenv("DEBUG")
-
+SITE_URL = 'http://' + IP_ADDRESS + ':8000'
 if DEBUG:
     print("DEBUG = ", os.getenv("DEBUG"))
     print("SITE_URL =", SITE_URL)
 
-ALLOWED_HOSTS = [ "localhost", "127.0.0.1", "0.0.0.0", "109.124.223.142"]
+ALLOWED_HOSTS = [ "localhost", "127.0.0.1", "0.0.0.0", IP_ADDRESS, "qrsite.ddns.net"]
 
 AUTH_USER_MODEL = 'application.CustomUser'
 # Application definition
