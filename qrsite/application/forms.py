@@ -103,7 +103,7 @@ class DynamicQRForm(forms.ModelForm):
         fields = ('title','target_url',  'size', 'format', 'is_public')
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'target_url': forms.URLInput(attrs={'class': 'form-control'}),
+            'target_url': forms.TextInput(attrs={'class': 'form-control'}),
             'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 

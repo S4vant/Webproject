@@ -269,6 +269,7 @@ def qr_edit(request, qr_id):
     return render(request, 'qr_edit.html', context)
 
 def qr_redirect(request, hashed_id, qr_id):
+    settings.DEBUG = True
     """
     Обработка переадресации с QR-кода
     """
@@ -303,10 +304,10 @@ def qr_redirect(request, hashed_id, qr_id):
         qr.views += 1
         qr.redirect_count += 1
         qr.save()
-        
+
         # Выполняем переадресацию
         print(f"Redirecting to: {qr.target_url}")
-        return redirect(qr.target_url)
+        return redirect(qr.target_url, permanent=True)
         
     except Http404 as e:
         print('404 error:', str(e))
@@ -314,6 +315,8 @@ def qr_redirect(request, hashed_id, qr_id):
     except Exception as e:
         print('Unexpected error:', str(e))
         raise
+    finally:
+        DEBUG = False
 
 def examples_list(request):
     examples = QRCode.objects.filter(is_public=True).order_by('-created_at')

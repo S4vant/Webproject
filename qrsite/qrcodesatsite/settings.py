@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-
+import requests
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -19,19 +19,25 @@ load_env()
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
-SITE_URL = os.getenv("SITE_URL")
-print(f"Final SITE_URL value: {SITE_URL}")
+
 # SECURITY WARNING: don't run with debug turned on in production!
+def get_external_ip():
+    try:
+        ip = requests.get('https://api.ipify.org', timeout=2).text
+        return ip
+    except Exception as e:
+        print(f"[ERROR] Не удалось получить внешний IP: {e}")
+        return "127.0.0.1"  # безопасное значение по умолчанию
 
-IP_ADDRESS = os.getenv("IP_ADDRESS")
-
+IP_ADDRESS = get_external_ip()
 DEBUG = os.getenv("DEBUG")
-SITE_URL = 'http://' + IP_ADDRESS + ':8000'
+SERVER_URL= 'http://' + IP_ADDRESS + ':8000'
+SITE_URL = 'qrsite.ddns.net'
 if DEBUG:
     print("DEBUG = ", os.getenv("DEBUG"))
-    print("SITE_URL =", SITE_URL)
-
-ALLOWED_HOSTS = [ "localhost", "127.0.0.1", "0.0.0.0", IP_ADDRESS, "qrsite.ddns.net"]
+    print("Server_URL =", SERVER_URL)
+print(f"Final SITE_URL value: {SITE_URL}")
+ALLOWED_HOSTS = [ "localhost", "127.0.0.1", "0.0.0.0","127.0.0.1:8080", IP_ADDRESS, SITE_URL]
 
 AUTH_USER_MODEL = 'application.CustomUser'
 # Application definition
