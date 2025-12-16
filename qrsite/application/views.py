@@ -2,7 +2,8 @@ from django.contrib.auth import logout, login, authenticate, update_session_auth
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse, HttpResponseRedirect
+
 from django.utils import timezone
 from django.conf import settings
 from .forms import CustomUserCreationForm, StaticQRForm, DynamicQRForm, ProfileForm, CustomPasswordChangeForm, EditDynamicQRForm, EditStaticQRForm
@@ -269,11 +270,12 @@ def qr_edit(request, qr_id):
     return render(request, 'qr_edit.html', context)
 
 def qr_redirect(request, hashed_id, qr_id):
-    settings.DEBUG = True
+    # settings.DEBUG = True
     """
     Обработка переадресации с QR-кода
     """
     try:
+        
         print(f"Request path: {request.path}")
         print(f"Request method: {request.method}")
         print(f"Request scheme: {request.scheme}")
@@ -304,10 +306,11 @@ def qr_redirect(request, hashed_id, qr_id):
         qr.views += 1
         qr.redirect_count += 1
         qr.save()
-
+        response = HttpResponseRedirect(qr.target_url)
+        response['Location'] = qr.target_url
         # Выполняем переадресацию
         print(f"Redirecting to: {qr.target_url}")
-        return redirect(qr.target_url, permanent=True)
+        return HttpResponse(status=302, headers={'Location': qr.target_url})
         
     except Http404 as e:
         print('404 error:', str(e))
@@ -315,8 +318,7 @@ def qr_redirect(request, hashed_id, qr_id):
     except Exception as e:
         print('Unexpected error:', str(e))
         raise
-    finally:
-        DEBUG = False
+    
 
 def examples_list(request):
     examples = QRCode.objects.filter(is_public=True).order_by('-created_at')

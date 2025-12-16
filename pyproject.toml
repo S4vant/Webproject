@@ -7,9 +7,11 @@ requires-python = ">=3.12"
 dependencies = [
     "cairosvg>=2.7.1",
     "django>=5.2",
+    "django-cors-headers>=4.9.0",
     "gunicorn>=23.0.0",
     "pillow>=11.2.1",
     "pyzbar>=0.1.9",
     "qrcode>=8.1",
+    "requests>=2.32.3",
     "whitenoise>=6.9.0",
 ]

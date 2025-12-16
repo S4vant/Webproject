@@ -30,19 +30,32 @@ def get_external_ip():
         return "127.0.0.1"  # безопасное значение по умолчанию
 
 IP_ADDRESS = get_external_ip()
-DEBUG = os.getenv("DEBUG")
-SERVER_URL= 'http://' + IP_ADDRESS + ':8000'
-SITE_URL = 'qrsite.ddns.net'
-if DEBUG:
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+
+SERVER_URL= 'https://' + IP_ADDRESS + ':8000'
+SITE_URL = os.getenv('SITE_URL')
+SECURE_SSL_REDIRECT = False
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+if DEBUG == 'TRUE':
     print("DEBUG = ", os.getenv("DEBUG"))
     print("Server_URL =", SERVER_URL)
 print(f"Final SITE_URL value: {SITE_URL}")
-ALLOWED_HOSTS = [ "localhost", "127.0.0.1", "0.0.0.0","127.0.0.1:8080", IP_ADDRESS, SITE_URL]
 
+ALLOWED_HOSTS = [
+    'qlm.ddns.net',
+    'www.qlm.ddns.net',
+    'localhost',
+    '127.0.0.1',
+    '185.224.9.57',
+]
+#"localhost", "127.0.0.1", "0.0.0.0","127.0.0.1:8080","api.ipify.org", IP_ADDRESS,
+CSRF_TRUSTED_ORIGINS = [ 'https://'+SITE_URL,"http://qlm.ddns.net"]
 AUTH_USER_MODEL = 'application.CustomUser'
 # Application definition
-
+CORS_ALLOWED_ORIGINS = [ 'https://'+SITE_URL,"http://qlm.ddns.net"]
 INSTALLED_APPS = [
+    'corsheaders',
     'application',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -53,13 +66,16 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'middleware.pols.RequestTimeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 
 ]
 
